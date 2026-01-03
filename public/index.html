@@ -7,21 +7,51 @@
     <meta name="color-scheme" content="dark light">
     <title>Explorer - wxn0.xyz</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="page.css" id="style">
+    <link rel="stylesheet" href="glitch.css" id="glitch-style">
 </head>
 
 <body>
     <!-- Have a nice day -->
     <!-- Remember: do NOT cheat -->
+
+    <div id="page">
+        <div class="container">
+            <header>
+                <h1>wxn0</h1>
+                <p>Software developer & security enthusiast</p>
+            </header>
+            <section class="links">
+                <h2>Find me on</h2>
+                <ul>
+                    <li><a href="https://wxn0brp.github.io" target="_blank" rel="noopener noreferrer">Blog</a></li>
+                    <li><a href="https://github.com/wxn0brP" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                </ul>
+            </section>
+            <section class="projects">
+                <h2>Projects</h2>
+                <ul>
+                    <li><a href="https://github.com/wxn0brP/ValtheraDB" target="_blank"
+                            rel="noopener noreferrer">ValtheraDB</a> - A high-performance database.</li>
+                    <li><a href="https://github.com/wxn0brP/VQL" target="_blank" rel="noopener noreferrer">VQL</a> - A
+                        query language for ValtheraDB.</li>
+                </ul>
+            </section>
+            <footer>
+                <p id="stick">Stick around, something might happen...</p>
+            </footer>
+        </div>
+    </div>
+
     <noscript>This page requires JavaScript to work.</noscript>
-    <div id="terminal">
+    <div id="terminal" style="display: none;">
         <div id="output"></div>
         <div id="input-line">
             <span class="prompt">></span>
             <input type="text" id="input" autofocus autocomplete="off" />
         </div>
     </div>
-    <script src="./dist/index.js"></script>
+    <script src="./dist/shake.js"></script>
 </body>
 
 </html>

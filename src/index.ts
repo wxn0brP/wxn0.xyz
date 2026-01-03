@@ -1,5 +1,5 @@
 import "@wxn0brp/flanker-ui/html";
-import { handleCommand } from "./commands";
+import { commandsList, handleCommand } from "./commands";
 import { welcome } from "./game";
 import { input } from "./ui";
 import { debounce } from "@wxn0brp/flanker-ui/utils";
@@ -45,6 +45,11 @@ window.addEventListener("keydown", (e) => {
         }
         input.focus();
     }
+});
+
+window.addEventListener("keyup", (e) => {
+    const cmd = input.value.split(" ")[0].toLowerCase();
+    input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
 });
 
 welcome();

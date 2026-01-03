@@ -7,6 +7,18 @@ function printAvailable(name: string, description: string) {
     print(`  <span class="success">${name}</span> - ${description}`);
 }
 
+export const commandsList = [
+    "help",
+    "status",
+    "hack",
+    "links",
+    "clear",
+    "reset",
+    "welcome",
+    "return",
+    "run",
+]
+
 export function handleCommand(command: string) {
     if (!command.trim()) {
         return;
@@ -50,6 +62,14 @@ export function handleCommand(command: string) {
             break;
         case "welcome":
             welcome();
+            break;
+        case "return":
+            localStorage.setItem("notHappened", "true");
+            location.reload();
+            break;
+        case "run":
+            localStorage.removeItem("run");
+            location.reload();
             break;
         default:
             print(`Command not found: <span class="error">${command}</span>`, "error");

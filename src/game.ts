@@ -111,7 +111,7 @@ export function showLinks() {
 export function welcome() {
     print("Welcome to <span class='system'>wxn0.xyz</span>", "system");
     print("This is a mini-game to discover the ecosystem.");
-    print("Version 0.0.3.");
+    print("Version 0.0.4.");
     print("Type 'help' to see available commands.");
 }
 

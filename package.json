@@ -13,7 +13,7 @@
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"build": "bun build src/index.ts --outdir dist"
+		"build": "bun build src/index.ts src/shake.ts --outdir dist"
 	},
 	"devDependencies": {
 		"typescript": "*"
