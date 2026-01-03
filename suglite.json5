@@ -1,0 +1,17 @@
+{
+	"cmd": "tsc --noEmit && bun run build",
+	"watch": [
+		"src"
+	],
+	server: 15686,
+	server_map: {
+		dir: {
+			"/": "public",
+			"/js": "dist",
+		}
+	},
+	"restart_cmd": "clear",
+	"events": {
+		"rs": "clear"
+	}
+}

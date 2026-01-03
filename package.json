@@ -1,0 +1,21 @@
+{
+	"name": "wxn0.xyz",
+	"version": "0.0.1",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"description": "",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wxn0brP/wxn0.xyz.git"
+	},
+	"homepage": "https://github.com/wxn0brP/wxn0.xyz",
+	"author": "wxn0brP",
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"build": "bun build src/index.ts --outdir dist"
+	},
+	"devDependencies": {
+		"typescript": "*"
+	}
+}
