@@ -1,5 +1,5 @@
 import { fileSystem } from "./filesystem";
-import { startMining, showLinks, showStatus, startHack, tryHack, welcome } from "./game";
+import { systemDestroy, startMining, showLinks, showStatus, startHack, tryHack, welcome } from "./game";
 import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
 import { hackingMission } from "./vars";
@@ -35,6 +35,7 @@ export const commandsList = [
     "hello",
     "zhiva",
     "mine",
+    "rm"
 ]
 
 export function handleCommand(command: string) {
@@ -105,6 +106,10 @@ export function handleCommand(command: string) {
                 fileSystem.cat(args[1], true);
                 break;
             }
+            if (firstArg === "rm" && ["-rf", "-fr"].includes(args[1]) && args[2] === "/") {
+                systemDestroy();
+                break;
+            }
             print("nice try, but you have no power here.", "error");
             break;
         case "echo":
@@ -118,6 +123,9 @@ export function handleCommand(command: string) {
             break;
         case "exit":
             print("There is no escape.", "error");
+            break;
+        case "rm":
+            print("Permission denied.", "error");
             break;
         case "suglite":
             print("Suglite is watching...", "system");
