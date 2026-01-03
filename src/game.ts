@@ -11,13 +11,43 @@ export const links = [
     { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", unlocked: false },
 ];
 
-function checkUnlocks() {
+function saveGame() {
+    const gameState = {
+        level,
+        xp,
+    };
+    localStorage.setItem("gameState", JSON.stringify(gameState));
+}
+
+function loadGame() {
+    const savedState = localStorage.getItem("gameState");
+    if (savedState) {
+        const gameState = JSON.parse(savedState);
+        level = gameState.level;
+        xp = gameState.xp;
+    }
+    checkUnlocks(true);
+}
+
+export function resetGame() {
+    localStorage.removeItem("gameState");
+    level = 0;
+    xp = 0;
     links.forEach(link => {
-        if (!link.unlocked && level >= link.level) {
-            link.unlocked = true;
+        link.unlocked = false;
+    });
+    print("Game progress has been reset.", "system");
+}
+
+function checkUnlocks(silent = false) {
+    links.forEach(link => {
+        const wasUnlocked = link.unlocked;
+        link.unlocked = level >= link.level
+        if (!wasUnlocked && link.unlocked && !silent) {
             print(`New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
         }
     });
+    saveGame();
 }
 
 export function hack() {
@@ -30,6 +60,7 @@ export function hack() {
         print(`Level up! You are now level <span class="success">${level}</span>.`, "system");
         checkUnlocks();
     }
+    saveGame();
 }
 
 export function showStatus() {
@@ -54,3 +85,5 @@ export function welcome() {
     print("This is a mini-game to discover the ecosystem.");
     print("Type 'help' to see available commands.");
 }
+
+loadGame();

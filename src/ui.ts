@@ -13,6 +13,8 @@ export function print(message: string, className?: string) {
 }
 
 export function printCommand(command: string) {
+    if (!command.trim())
+        return;
     const p = document.createElement("p");
     p.innerHTML = `<span class="prompt'>></span> ${command}`;
     output.appendChild(p);

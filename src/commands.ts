@@ -1,11 +1,15 @@
-import { print, printCommand, clear } from "./ui.js";
-import { hack, showStatus, showLinks, welcome } from "./game.js";
+import { print, printCommand, clear } from "./ui";
+import { hack, showStatus, showLinks, welcome, resetGame } from "./game";
 
 function printAvailable(name: string, description: string) {
     print(`  <span class="success">${name}</span> - ${description}`);
 }
 
 export function handleCommand(command: string) {
+    if (!command.trim()) {
+        return;
+    }
+
     printCommand(command);
     const [cmd, ...args] = command.toLowerCase().split(" ");
     print("$ " + cmd, "executed");
@@ -18,6 +22,7 @@ export function handleCommand(command: string) {
             printAvailable("hack", "Gain XP to level up");
             printAvailable("links", "Show unlocked links");
             printAvailable("clear", "Clear the terminal");
+            printAvailable("reset", "Reset your game progress");
             printAvailable("welcome", "Show the welcome message");
             break;
         case "status":
@@ -31,6 +36,9 @@ export function handleCommand(command: string) {
             break;
         case "clear":
             clear();
+            break;
+        case "reset":
+            resetGame();
             break;
         case "welcome":
             welcome();
