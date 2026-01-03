@@ -86,3 +86,7 @@ a:hover {
 .god-mode {
     animation: rainbow 2s linear infinite;
 }
+
+img {
+    cursor: pointer;
+}
