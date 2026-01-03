@@ -4,3 +4,4 @@ export * from "./mining";
 export * from "./destruction";
 export * from "./status";
 export * from "./welcome";
+export * from "./vim";

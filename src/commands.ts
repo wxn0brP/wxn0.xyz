@@ -6,7 +6,8 @@ import {
     startMining,
     systemDestroy,
     tryHack,
-    welcome
+    welcome,
+    openVim
 } from "./game";
 import { cat } from "./game/cat";
 import { resetGame } from "./save";
@@ -45,6 +46,9 @@ export const commandsList = [
     "hello",
     "zhiva",
     "mine",
+    "make",
+    "vim",
+    "vi",
     "rm"
 ]
 
@@ -93,6 +97,10 @@ export function handleCommand(command: string) {
             break;
         case "links":
             showLinks();
+            break;
+        case "vim":
+        case "vi":
+            openVim();
             break;
         case "clear":
             clear();
