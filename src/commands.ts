@@ -1,5 +1,5 @@
 import { fileSystem } from "./filesystem";
-import { showLinks, showStatus, startHack, tryHack, welcome } from "./game";
+import { startMining, showLinks, showStatus, startHack, tryHack, welcome } from "./game";
 import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
 import { hackingMission } from "./vars";
@@ -15,6 +15,10 @@ export const commandsList = [
     "status",
     "hack",
     "links",
+    "ls",
+    "cd",
+    "cat",
+    "pwd",
     "clear",
     "reset",
     "welcome",
@@ -30,10 +34,7 @@ export const commandsList = [
     "coinflip",
     "hello",
     "zhiva",
-    "ls",
-    "cd",
-    "cat",
-    "pwd"
+    "mine",
 ]
 
 export function handleCommand(command: string) {
@@ -60,6 +61,7 @@ export function handleCommand(command: string) {
             printAvailable("help", "Show this help message");
             printAvailable("status", "Show your current level and XP");
             printAvailable("hack", "Start a hacking mission to gain XP");
+            printAvailable("mine", "Mine for XP (Process intensive)");
             printAvailable("links", "Show unlocked links");
             printAvailable("ls", "List directory contents");
             printAvailable("cd", "Change directory");
@@ -74,6 +76,9 @@ export function handleCommand(command: string) {
             break;
         case "hack":
             startHack();
+            break;
+        case "mine":
+            startMining();
             break;
         case "links":
             showLinks();
