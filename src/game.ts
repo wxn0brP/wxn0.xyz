@@ -1,76 +1,104 @@
+import { decrementCell, incrementCell } from "@wxn0brp/flanker-ui/storeUtils";
+import { loadGame, saveGame } from "./save";
 import { print } from "./ui";
+import { $store, hackingMission, links, targets, vulnerabilities, xpToNextLevel } from "./vars";
+import { delay } from "@wxn0brp/flanker-ui/utils";
 
-export let level = 0;
-export let xp = 0;
-export const xpToNextLevel = 100;
-
-export const links = [
-    { level: 1, name: "Homepage/Blog", url: "https://wxn0brp.github.io", unlocked: false },
-    { level: 2, name: "GitHub Profile", url: "https://github.com/wxn0brP", unlocked: false },
-    { level: 3, name: "ValtheraDB", url: "https://github.com/wxn0brP/ValtheraDB", unlocked: false },
-    { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", unlocked: false },
-];
-
-function saveGame() {
-    const gameState = {
-        level,
-        xp,
-    };
-    localStorage.setItem("gameState", JSON.stringify(gameState));
-}
-
-function loadGame() {
-    const savedState = localStorage.getItem("gameState");
-    if (savedState) {
-        const gameState = JSON.parse(savedState);
-        level = gameState.level;
-        xp = gameState.xp;
-    }
-    checkUnlocks(true);
-}
-
-export function resetGame() {
-    localStorage.removeItem("gameState");
-    level = 0;
-    xp = 0;
+function checkUnlocks() {
+    const level = $store.level.get();
     links.forEach(link => {
-        link.unlocked = false;
+        if (link.displayed) return;
+
+        const wasUnlocked = level >= link.level;
+        if (!wasUnlocked) return;
+
+        link.displayed = true;
+        print(`New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
     });
-    print("Game progress has been reset.", "system");
+    saveGame();
 }
 
-function checkUnlocks(silent = false) {
-    links.forEach(link => {
-        const wasUnlocked = link.unlocked;
-        link.unlocked = level >= link.level
-        if (!wasUnlocked && link.unlocked && !silent) {
-            print(`New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
+function failHack() {
+    print("Hack failed. Connection lost.", "error");
+    if (hackingMission.timer)
+        clearTimeout(hackingMission.timer);
+
+    hackingMission.active = false;
+}
+
+export function tryHack(input: string) {
+    if (!hackingMission.active)
+        return;
+
+    print("$ " + input, "executed");
+
+    if (input.toLowerCase() === hackingMission.command) {
+        const xpGained = Math.floor(Math.random() * 30) + 20;
+        incrementCell($store.xp, xpGained);
+        print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
+        if ($store.xp.get() >= xpToNextLevel) {
+            incrementCell($store.level, 1);
+            decrementCell($store.xp, xpToNextLevel);
+            print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
+            checkUnlocks();
         }
-    });
-    saveGame();
+        saveGame();
+    } else {
+        print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
+        failHack();
+    }
+
+    if (hackingMission.timer) {
+        clearTimeout(hackingMission.timer);
+    }
+    hackingMission.active = false;
 }
 
-export function hack() {
-    const xpGained = Math.floor(Math.random() * 30) + 10;
-    xp += xpGained;
-    print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
-    if (xp >= xpToNextLevel) {
-        level++;
-        xp -= xpToNextLevel;
-        print(`Level up! You are now level <span class="success">${level}</span>.`, "system");
-        checkUnlocks();
+export async function startHack() {
+    if (hackingMission.active) {
+        print("A hack is already in progress. Complete it or let it time out.", "system");
+        return;
     }
-    saveGame();
+
+    hackingMission.active = true;
+
+    const target = targets[Math.floor(Math.random() * targets.length)];
+    const vulnerability = vulnerabilities[Math.floor(Math.random() * vulnerabilities.length)];
+
+    hackingMission.target = target;
+    hackingMission.vulnerability = vulnerability.name;
+    hackingMission.command = vulnerability.command;
+
+    print("Scanning for targets...", "system");
+    await delay(1000);
+
+    print(`Found target: <span class="dim">${target}</span>`, "system");
+    await delay(1000);
+
+    print("Analyzing vulnerabilities...", "system");
+    await delay(1000);
+
+    print(`Found vulnerability: <span class="dim">${vulnerability.name}</span>`, "system");
+    print(`To exploit, type: <span class="success">${vulnerability.command}</span>`);
+
+    hackingMission.timer = setTimeout(() => {
+        if (hackingMission.active) {
+            print("Timeout! Hack failed.", "error");
+            hackingMission.active = false;
+        }
+    }, 10000) as any;
 }
 
 export function showStatus() {
-    print(`Level: <span class="success">${level}</span>`);
-    print(`XP: <span class="success">${xp}/${xpToNextLevel}</span>`);
+    print(`Level: <span class="success">${$store.level.get()}</span>`);
+    print(`XP: <span class="success">${$store.xp.get()}/${xpToNextLevel}</span>`);
 }
 
 export function showLinks() {
     print("Unlocked links:");
-    const unlockedLinks = links.filter(l => l.unlocked);
+    const level = $store.level.get();
+    const unlockedLinks = links.filter(l => l.level <= level);
+
     if (unlockedLinks.length === 0) {
         print("  No links unlocked yet. Keep hacking!", "dim");
     } else {
@@ -83,6 +111,7 @@ export function showLinks() {
 export function welcome() {
     print("Welcome to <span class='system'>wxn0.xyz</span>", "system");
     print("This is a mini-game to discover the ecosystem.");
+    print("Version 0.0.3.");
     print("Type 'help' to see available commands.");
 }
 

@@ -17,5 +17,8 @@
 	},
 	"devDependencies": {
 		"typescript": "*"
+	},
+	"dependencies": {
+		"@wxn0brp/flanker-ui": "^0.4.6"
 	}
 }

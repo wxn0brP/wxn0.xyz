@@ -1,15 +1,15 @@
+import "@wxn0brp/flanker-ui/html";
 import { handleCommand } from "./commands";
 import { welcome } from "./game";
 import { input } from "./ui";
+import { debounce } from "@wxn0brp/flanker-ui/utils";
 
 const commandHistory: string[] = [];
 let historyIndex = -1;
 
-function moveCursorToEnd() {
-    setTimeout(() => {
-        input.setSelectionRange(input.value.length, input.value.length);
-    }, 50)
-}
+const moveCursorToEnd = debounce(() => {
+    input.setSelectionRange(input.value.length, input.value.length);
+}, 50);
 
 input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
