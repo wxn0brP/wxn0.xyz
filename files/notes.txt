@@ -3,3 +3,4 @@ TODO:
 - [ ] Implement secure login
 - [ ] Backup the ValtheraDB instance
 - [ ] Buy more coffee
+- [ ] Remove French language pack (it's useless) (use sudo rm ...)
