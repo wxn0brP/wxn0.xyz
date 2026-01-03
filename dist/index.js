@@ -74,6 +74,22 @@
   window.qs = window.qi = s.qs.bind(document);
 })();
 
+// node_modules/@wxn0brp/flanker-ui/dist/utils.js
+function debounce(func, wait = 100) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+function delay(ms) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
 // src/ui.ts
 var terminal = document.getElementById("terminal");
 var output = document.getElementById("output");
@@ -279,16 +295,6 @@ class VirtualFileSystem {
 }
 var fileSystem = new VirtualFileSystem;
 
-// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
-function incrementCell(cell, by = 1) {
-  cell.set(cell.get() + by);
-  return cell;
-}
-function decrementCell(cell, by = 1) {
-  cell.set(cell.get() - by);
-  return cell;
-}
-
 // node_modules/@wxn0brp/flanker-ui/dist/store.js
 var storeKeys = ["listeners", "value", "notify", "get", "set", "subscribe", "parent", "isStore"];
 function createStore(schema, parent) {
@@ -393,24 +399,17 @@ class ReactiveCell {
     return this;
   }
 }
-// node_modules/@wxn0brp/flanker-ui/dist/utils.js
-function debounce(func, wait = 100) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-function delay(ms) {
-  return new Promise((res) => setTimeout(res, ms));
-}
-
 // node_modules/@wxn0brp/flanker-ui/dist/component/index.js
 var fetchVQL = window?.VQLClient?.fetchVQL;
+// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
+function incrementCell(cell, by = 1) {
+  cell.set(cell.get() + by);
+  return cell;
+}
+function decrementCell(cell, by = 1) {
+  cell.set(cell.get() - by);
+  return cell;
+}
 
 // node_modules/@wxn0brp/flanker-ui/dist/index.js
 globalThis.lo = console.log;
@@ -473,7 +472,7 @@ function resetGame() {
   print("Game progress has been reset.", "system");
 }
 
-// src/game.ts
+// src/game/progression.ts
 function checkUnlocks() {
   const level = $store.level.get();
   links.forEach((link) => {
@@ -487,6 +486,7 @@ function checkUnlocks() {
   });
   saveGame();
 }
+// src/game/hacking.ts
 function failHack() {
   print("Hack failed. Connection lost.", "error");
   if (hackingMission.timer)
@@ -543,41 +543,7 @@ async function startHack() {
     }
   }, 1e4);
 }
-function showStatus() {
-  print(`Level: <span class="success">${$store.level.get()}</span>`);
-  print(`XP: <span class="success">${$store.xp.get()}/${xpToNextLevel}</span>`);
-}
-function showLinks() {
-  print("Unlocked links:");
-  const level = $store.level.get();
-  const unlockedLinks = links.filter((l) => l.level <= level);
-  if (unlockedLinks.length === 0) {
-    print("  No links unlocked yet. Keep hacking!", "dim");
-  } else {
-    unlockedLinks.forEach((l) => {
-      print(`  <a href="${l.url}" target="_blank">${l.name}</a> - Level ${l.level}`);
-    });
-  }
-}
-async function welcome() {
-  input.disabled = true;
-  print("CONNECTION ESTABLISHED.", "success");
-  await delay(600);
-  print("CRITICAL: SYSTEM BREACH DETECTED...", "error");
-  await delay(800);
-  print("BYPASSING SECURITY PROTOCOLS...", "system");
-  await delay(1200);
-  print("ACCESS GRANTED.", "success");
-  await delay(500);
-  print("----------------------------------------", "dim");
-  print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
-  print("Kernel v2.0.4-build.99 loaded.");
-  print("System Shell v0.0.6 loaded.");
-  print("----------------------------------------", "dim");
-  await delay(300);
-  print("Type '<span class='success'>help</span>' to list available commands.");
-  input.disabled = false;
-}
+// src/game/mining.ts
 var isBusy = false;
 async function startMining() {
   if (isBusy || hackingMission.active) {
@@ -612,6 +578,7 @@ async function startMining() {
   isBusy = false;
   input.focus();
 }
+// src/game/destruction.ts
 async function systemDestroy() {
   input.disabled = true;
   print("WARNING: You are about to delete the entire filesystem.", "error");
@@ -657,11 +624,46 @@ async function systemDestroy() {
   }
   await delay(1000);
   statusEl.textContent = "100% complete - Restarting...";
-  await delay(5000);
+  await delay(1000);
   location.reload();
 }
-loadGame();
-
+// src/game/status.ts
+function showStatus() {
+  print(`Level: <span class="success">${$store.level.get()}</span>`);
+  print(`XP: <span class="success">${$store.xp.get()}/${xpToNextLevel}</span>`);
+}
+function showLinks() {
+  print("Unlocked links:");
+  const level = $store.level.get();
+  const unlockedLinks = links.filter((l) => l.level <= level);
+  if (unlockedLinks.length === 0) {
+    print("  No links unlocked yet. Keep hacking!", "dim");
+  } else {
+    unlockedLinks.forEach((l) => {
+      print(`  <a href="${l.url}" target="_blank">${l.name}</a> - Level ${l.level}`);
+    });
+  }
+}
+// src/game/welcome.ts
+async function welcome() {
+  input.disabled = true;
+  print("CONNECTION ESTABLISHED.", "success");
+  await delay(600);
+  print("CRITICAL: SYSTEM BREACH DETECTED...", "error");
+  await delay(800);
+  print("BYPASSING SECURITY PROTOCOLS...", "system");
+  await delay(1200);
+  print("ACCESS GRANTED.", "success");
+  await delay(500);
+  print("----------------------------------------", "dim");
+  print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
+  print("Kernel v2.0.4-build.99 loaded.");
+  print("System Shell v0.0.6 loaded.");
+  print("----------------------------------------", "dim");
+  await delay(300);
+  print("Type '<span class='success'>help</span>' to list available commands.");
+  input.disabled = false;
+}
 // src/commands.ts
 var box = qs(".prompt");
 function printAvailable(name, description) {
@@ -673,6 +675,7 @@ var commandsList = [
   "hack",
   "links",
   "ls",
+  "dir",
   "cd",
   "cat",
   "pwd",
@@ -715,7 +718,7 @@ function handleCommand(command) {
       printAvailable("hack", "Start a hacking mission to gain XP");
       printAvailable("mine", "Mine for XP (Process intensive)");
       printAvailable("links", "Show unlocked links");
-      printAvailable("ls", "List directory contents");
+      printAvailable("ls/dir", "List directory contents");
       printAvailable("cd", "Change directory");
       printAvailable("cat", "Read file content");
       printAvailable("clear", "Clear the terminal");
@@ -809,9 +812,11 @@ function handleCommand(command) {
       print("Hello there!", "system");
       break;
     case "ls":
-    case "dir":
     case "ll":
       fileSystem.ls(firstArg);
+      break;
+    case "dir":
+      print("Windows sucks.", "error");
       break;
     case "cd":
       fileSystem.cd(firstArg);
@@ -905,4 +910,5 @@ window.addEventListener("keydown", (e) => {
     konamiIndex = 0;
   }
 });
+loadGame();
 welcome();
