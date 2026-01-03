@@ -578,6 +578,40 @@ async function welcome() {
   print("Type '<span class='success'>help</span>' to list available commands.");
   input.disabled = false;
 }
+var isBusy = false;
+async function startMining() {
+  if (isBusy || hackingMission.active) {
+    print("System is busy.", "error");
+    return;
+  }
+  isBusy = true;
+  input.disabled = true;
+  print("Initiating crypto-mining sequence...", "system");
+  await delay(1000);
+  print("Allocating resources... [CPU: 100%]", "dim");
+  await delay(1500);
+  print("Hashing block...", "dim");
+  await delay(2000);
+  const success = Math.random() > 0.3;
+  if (success) {
+    const xpGained = Math.floor(Math.random() * 15) + 5;
+    incrementCell($store.xp, xpGained);
+    print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
+    print(`Reward: <span class="success">${xpGained}</span> XP`);
+    if ($store.xp.get() >= xpToNextLevel) {
+      incrementCell($store.level, 1);
+      decrementCell($store.xp, xpToNextLevel);
+      print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
+      checkUnlocks();
+    }
+    saveGame();
+  } else {
+    print("Mining failed. Invalid share.", "error");
+  }
+  input.disabled = false;
+  isBusy = false;
+  input.focus();
+}
 loadGame();
 
 // src/commands.ts
@@ -590,6 +624,10 @@ var commandsList = [
   "status",
   "hack",
   "links",
+  "ls",
+  "cd",
+  "cat",
+  "pwd",
   "clear",
   "reset",
   "welcome",
@@ -605,10 +643,7 @@ var commandsList = [
   "coinflip",
   "hello",
   "zhiva",
-  "ls",
-  "cd",
-  "cat",
-  "pwd"
+  "mine"
 ];
 function handleCommand(command) {
   if (!command.trim()) {
@@ -629,6 +664,7 @@ function handleCommand(command) {
       printAvailable("help", "Show this help message");
       printAvailable("status", "Show your current level and XP");
       printAvailable("hack", "Start a hacking mission to gain XP");
+      printAvailable("mine", "Mine for XP (Process intensive)");
       printAvailable("links", "Show unlocked links");
       printAvailable("ls", "List directory contents");
       printAvailable("cd", "Change directory");
@@ -643,6 +679,9 @@ function handleCommand(command) {
       break;
     case "hack":
       startHack();
+      break;
+    case "mine":
+      startMining();
       break;
     case "links":
       showLinks();
