@@ -1,5 +1,5 @@
 import { fileSystem } from "./filesystem";
-import { systemDestroy, startMining, showLinks, showStatus, startHack, tryHack, welcome } from "./game";
+import { startMining, showLinks, showStatus, startHack, tryHack, welcome, systemDestroy } from "./game";
 import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
 import { hackingMission } from "./vars";
@@ -16,6 +16,7 @@ export const commandsList = [
     "hack",
     "links",
     "ls",
+    "dir",
     "cd",
     "cat",
     "pwd",
@@ -64,7 +65,7 @@ export function handleCommand(command: string) {
             printAvailable("hack", "Start a hacking mission to gain XP");
             printAvailable("mine", "Mine for XP (Process intensive)");
             printAvailable("links", "Show unlocked links");
-            printAvailable("ls", "List directory contents");
+            printAvailable("ls/dir", "List directory contents");
             printAvailable("cd", "Change directory");
             printAvailable("cat", "Read file content");
             printAvailable("clear", "Clear the terminal");
@@ -158,9 +159,11 @@ export function handleCommand(command: string) {
             print("Hello there!", "system");
             break;
         case "ls":
-        case "dir":
         case "ll":
             fileSystem.ls(firstArg);
+            break;
+        case "dir":
+            print("Windows sucks.", "error");
             break;
         case "cd":
             fileSystem.cd(firstArg);
