@@ -1,0 +1,15 @@
+CURRENT PROJECTS:
+
+1. ValtheraDB
+   - Status: Active
+   - Type: Database
+   - Description: High-performance timeseries DB.
+
+2. VQL
+   - Status: Active
+   - Type: Query Language
+   - Description: Query language for ValtheraDB.
+
+3. wxn0.xyz
+   - Status: Production
+   - Description: This website.

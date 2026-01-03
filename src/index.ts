@@ -52,4 +52,25 @@ window.addEventListener("keyup", (e) => {
     input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
 });
 
+const konamiCode = [
+    "ArrowUp", "ArrowUp",
+    "ArrowDown", "ArrowDown",
+    "ArrowLeft", "ArrowRight",
+    "ArrowLeft", "ArrowRight",
+    "b", "a"
+];
+let konamiIndex = 0;
+
+window.addEventListener("keydown", (e) => {
+    if (e.key === konamiCode[konamiIndex]) {
+        konamiIndex++;
+        if (konamiIndex === konamiCode.length) {
+            handleCommand("konami");
+            konamiIndex = 0;
+        }
+    } else {
+        konamiIndex = 0;
+    }
+});
+
 welcome();

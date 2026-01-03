@@ -1,0 +1,5 @@
+[2026-01-03 10:00:01] SYSTEM_BOOT: OK
+[2026-01-03 10:00:05] NETWORK: CONNECTED 192.168.1.100
+[2026-01-03 10:45:12] WARNING: Intrusion attempt from 10.0.0.5 blocked.
+[2026-01-03 12:00:00] CRON: Backup completed.
+[2026-01-03 23:58:30] USER: guest connected from web terminal.
