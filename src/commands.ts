@@ -1,5 +1,14 @@
 import { fileSystem } from "./filesystem";
-import { startMining, showLinks, showStatus, startHack, tryHack, welcome, systemDestroy } from "./game";
+import {
+    showLinks,
+    showStatus,
+    startHack,
+    startMining,
+    systemDestroy,
+    tryHack,
+    welcome
+} from "./game";
+import { cat } from "./game/cat";
 import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
 import { hackingMission } from "./vars";
@@ -169,6 +178,10 @@ export function handleCommand(command: string) {
             fileSystem.cd(firstArg);
             break;
         case "cat":
+            if (!firstArg || !isNaN(+firstArg)) {
+                cat(+firstArg);
+                break;
+            }
             fileSystem.cat(firstArg);
             break;
         case "pwd":
