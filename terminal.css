@@ -71,3 +71,18 @@ a:hover {
 .dim {
     color: #888;
 }
+
+@keyframes rainbow {
+    0% {
+        filter: hue-rotate(0deg);
+    }
+
+    100% {
+        filter: hue-rotate(360deg);
+        text-shadow: 0 0 10px #0f0;
+    }
+}
+
+.god-mode {
+    animation: rainbow 2s linear infinite;
+}

@@ -1,0 +1,25 @@
+{
+    "home": {
+        "guest": {
+            "README.txt": "README.txt",
+            "notes.txt": "notes.txt",
+            "projects": {
+                "list.txt": "project_list.txt"
+            }
+        }
+    },
+    "var": {
+        "log": {
+            "syslog": "server.log"
+        }
+    },
+    "etc": {
+        "passwd": "sudo:secret.txt",
+        "shadow": "sudo:secret.txt",
+        "config.sys": "config.sys"
+    },
+    "secret": {
+        "$hidden": true,
+        "plans.txt": "secret.txt"
+    }
+}

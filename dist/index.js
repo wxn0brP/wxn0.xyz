@@ -74,16 +74,6 @@
   window.qs = window.qi = s.qs.bind(document);
 })();
 
-// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
-function incrementCell(cell, by = 1) {
-  cell.set(cell.get() + by);
-  return cell;
-}
-function decrementCell(cell, by = 1) {
-  cell.set(cell.get() - by);
-  return cell;
-}
-
 // src/ui.ts
 var terminal = document.getElementById("terminal");
 var output = document.getElementById("output");
@@ -106,6 +96,197 @@ function printCommand(command) {
 }
 function clear() {
   output.innerHTML = "";
+}
+
+// src/filesystem.ts
+class VirtualFileSystem {
+  root = null;
+  currentPath = ["home", "guest"];
+  loaded = false;
+  constructor() {
+    this.load();
+  }
+  async load() {
+    try {
+      const res = await fetch("./system.json");
+      const raw = await res.json();
+      this.root = this.parseNode(raw, "root");
+      this.loaded = true;
+    } catch (e) {
+      console.error("Failed to load VFS", e);
+      print("System Error: Filesystem corruption detected.", "error");
+    }
+  }
+  parseNode(raw, name) {
+    if (typeof raw === "string") {
+      return { type: "file", src: raw, name };
+    }
+    const children = {};
+    const isHidden = raw["$hidden"] === true;
+    for (const [key, value] of Object.entries(raw)) {
+      if (key === "$hidden")
+        continue;
+      const childNode = this.parseNode(value, key);
+      childNode.parent = undefined;
+      children[key] = childNode;
+    }
+    return { type: "dir", children, hidden: isHidden, name };
+  }
+  getCWD() {
+    return "/" + this.currentPath.join("/");
+  }
+  resolvePath(path) {
+    if (!this.loaded || !this.root)
+      return null;
+    let parts = path.split("/").filter(Boolean);
+    let p = path.startsWith("/") ? [] : [...this.currentPath];
+    const normalizedPath = [];
+    for (const part of p) {
+      normalizedPath.push(part);
+    }
+    for (const part of parts) {
+      if (part === ".")
+        continue;
+      if (part === "..") {
+        if (normalizedPath.length > 0)
+          normalizedPath.pop();
+      } else {
+        normalizedPath.push(part);
+      }
+    }
+    let current = this.root;
+    if (normalizedPath.length === 0)
+      return this.root;
+    for (const part of normalizedPath) {
+      if (current.type !== "dir" || !current.children)
+        return null;
+      if (current.children[part]) {
+        current = current.children[part];
+      } else {
+        return null;
+      }
+    }
+    return current;
+  }
+  ls(args) {
+    if (!this.loaded)
+      return;
+    let target;
+    if (!args || args.trim() === "") {
+      target = this.resolvePath(this.getCWD());
+    } else {
+      target = this.resolvePath(args);
+    }
+    if (!target) {
+      print(`ls: cannot access '${args || ""}': No such file or directory`, "error");
+      return;
+    }
+    if (target.type === "file") {
+      print(target.src || target.name || "file");
+      return;
+    }
+    if (!target.children)
+      return;
+    const names = Object.keys(target.children).filter((k) => !target.children[k].hidden);
+    if (names.length === 0) {
+      print("(empty)", "dim");
+    } else {
+      names.sort((a, b) => {
+        const nodeA = target.children[a];
+        const nodeB = target.children[b];
+        const typeA = nodeA.type === "dir" ? 0 : 1;
+        const typeB = nodeB.type === "dir" ? 0 : 1;
+        if (typeA !== typeB)
+          return typeA - typeB;
+        return a.localeCompare(b);
+      });
+      names.forEach((name) => {
+        const node = target.children[name];
+        const suffix = node.type === "dir" ? "/" : "";
+        const style = node.type === "dir" ? "system" : "";
+        print(`<span class="${style}">${name}${suffix}</span>`);
+      });
+    }
+  }
+  cd(path) {
+    if (!this.loaded)
+      return;
+    if (!path) {
+      this.currentPath = ["home", "guest"];
+      return;
+    }
+    const target = this.resolvePath(path);
+    if (!target) {
+      print(`cd: ${path}: No such file or directory`, "error");
+      return;
+    }
+    if (target.type !== "dir") {
+      print(`cd: ${path}: Not a directory`, "error");
+      return;
+    }
+    let p = path.startsWith("/") ? [] : [...this.currentPath];
+    const parts = path.split("/").filter(Boolean);
+    for (const part of parts) {
+      if (part === ".")
+        continue;
+      if (part === "..") {
+        if (p.length > 0)
+          p.pop();
+      } else {
+        p.push(part);
+      }
+    }
+    this.currentPath = p;
+  }
+  async cat(path, isSudo = false) {
+    if (!this.loaded)
+      return;
+    if (!path) {
+      print("Usage: cat <filename>", "error");
+      return;
+    }
+    const target = this.resolvePath(path);
+    if (!target) {
+      print(`cat: ${path}: No such file or directory`, "error");
+      return;
+    }
+    if (target.type !== "file") {
+      print(`cat: ${path}: Is a directory`, "error");
+      return;
+    }
+    let src = target.src;
+    if (src) {
+      try {
+        if (src.startsWith("sudo:")) {
+          if (!isSudo) {
+            print("******** [PERMISSION DENIED] ********", "error");
+            return;
+          }
+          src = src.split(":")[1];
+        }
+        const response = await fetch(`./files/${src}`);
+        if (!response.ok)
+          throw new Error("404");
+        const text = await response.text();
+        print(text.replace(/\n/g, "<br>"));
+      } catch (e) {
+        print("Error reading file: IO Error", "error");
+      }
+    } else {
+      print("(empty)");
+    }
+  }
+}
+var fileSystem = new VirtualFileSystem;
+
+// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
+function incrementCell(cell, by = 1) {
+  cell.set(cell.get() + by);
+  return cell;
+}
+function decrementCell(cell, by = 1) {
+  cell.set(cell.get() - by);
+  return cell;
 }
 
 // node_modules/@wxn0brp/flanker-ui/dist/store.js
@@ -391,7 +572,7 @@ async function welcome() {
   print("----------------------------------------", "dim");
   print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
   print("Kernel v2.0.4-build.99 loaded.");
-  print("System Shell v0.0.5 loaded.");
+  print("System Shell v0.0.6 loaded.");
   print("----------------------------------------", "dim");
   await delay(300);
   print("Type '<span class='success'>help</span>' to list available commands.");
@@ -400,6 +581,7 @@ async function welcome() {
 loadGame();
 
 // src/commands.ts
+var box = qs(".prompt");
 function printAvailable(name, description) {
   print(`  <span class="success">${name}</span> - ${description}`);
 }
@@ -412,7 +594,21 @@ var commandsList = [
   "reset",
   "welcome",
   "return",
-  "run"
+  "run",
+  "sudo",
+  "echo",
+  "date",
+  "whoami",
+  "exit",
+  "suglite",
+  "matrix",
+  "coinflip",
+  "hello",
+  "zhiva",
+  "ls",
+  "cd",
+  "cat",
+  "pwd"
 ];
 function handleCommand(command) {
   if (!command.trim()) {
@@ -423,18 +619,24 @@ function handleCommand(command) {
     tryHack(command);
     return;
   }
-  const [cmd, ...args] = command.toLowerCase().split(" ");
-  print("$ " + cmd, "executed");
-  switch (cmd) {
+  const [cmd, ...args] = command.split(" ");
+  const fullArgs = command.substring(cmd.length + 1);
+  let firstArg = args[0];
+  print("$ " + command);
+  switch (cmd.toLowerCase()) {
     case "help":
       print("Available commands:");
       printAvailable("help", "Show this help message");
       printAvailable("status", "Show your current level and XP");
       printAvailable("hack", "Start a hacking mission to gain XP");
       printAvailable("links", "Show unlocked links");
+      printAvailable("ls", "List directory contents");
+      printAvailable("cd", "Change directory");
+      printAvailable("cat", "Read file content");
       printAvailable("clear", "Clear the terminal");
       printAvailable("reset", "Reset your game progress");
-      printAvailable("welcome", "Show the welcome message");
+      printAvailable("date", "Show current system time");
+      printAvailable("zhiva [name]", "Run Zhiva app");
       break;
     case "status":
       showStatus();
@@ -461,6 +663,78 @@ function handleCommand(command) {
     case "run":
       localStorage.removeItem("run");
       location.reload();
+      break;
+    case "sudo":
+      if (firstArg === "cat") {
+        fileSystem.cat(args[1], true);
+        break;
+      }
+      print("nice try, but you have no power here.", "error");
+      break;
+    case "echo":
+      print(fullArgs || " ");
+      break;
+    case "date":
+      print(new Date().toString());
+      break;
+    case "whoami":
+      print("guest@wxn0.xyz");
+      break;
+    case "exit":
+      print("There is no escape.", "error");
+      break;
+    case "suglite":
+      print("Suglite is watching...", "system");
+      break;
+    case "matrix":
+      print("The Matrix has you...", "success");
+      break;
+    case "coinflip":
+      print(Math.random() > 0.5 ? "Heads" : "Tails", "success");
+      break;
+    case "42":
+      print("The answer to life, the universe, and everything.", "success");
+      break;
+    case "konami":
+      document.body.classList.toggle("god-mode");
+      const isGod = document.body.classList.contains("god-mode");
+      if (isGod) {
+        print("GOD MODE ACTIVATED", "system");
+        print("Unlimited power...", "dim");
+        box.textContent = "GOD#";
+        box.style.color = "#fff";
+      } else {
+        print("God mode... disabled due to budget cuts.", "dim");
+        box.textContent = ">";
+        box.style.color = "";
+      }
+      break;
+    case "hello":
+    case "hi":
+      print("Hello there!", "system");
+      break;
+    case "ls":
+    case "dir":
+    case "ll":
+      fileSystem.ls(firstArg);
+      break;
+    case "cd":
+      fileSystem.cd(firstArg);
+      break;
+    case "cat":
+      fileSystem.cat(firstArg);
+      break;
+    case "pwd":
+      print(fileSystem.getCWD());
+      break;
+    case "zhiva":
+      if (!firstArg) {
+        print("Usage: zhiva [name]", "error");
+        break;
+      }
+      if (!firstArg.includes("/"))
+        firstArg = `wxn0brP/${firstArg}`;
+      location.href = `zhiva://start/${firstArg}`;
       break;
     default:
       print(`Command not found: <span class="error">${command}</span>`, "error");
@@ -511,5 +785,29 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => {
   const cmd = input.value.split(" ")[0].toLowerCase();
   input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
+});
+var konamiCode = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a"
+];
+var konamiIndex = 0;
+window.addEventListener("keydown", (e) => {
+  if (e.key === konamiCode[konamiIndex]) {
+    konamiIndex++;
+    if (konamiIndex === konamiCode.length) {
+      handleCommand("konami");
+      konamiIndex = 0;
+    }
+  } else {
+    konamiIndex = 0;
+  }
 });
 welcome();

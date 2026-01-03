@@ -1,0 +1,5 @@
+TODO:
+- [x] Fix the glitch effect
+- [ ] Implement secure login
+- [ ] Backup the ValtheraDB instance
+- [ ] Buy more coffee
