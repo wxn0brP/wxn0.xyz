@@ -1,7 +1,7 @@
 import { createStore } from "@wxn0brp/flanker-ui";
 
 export const links = [
-    { level: 1, name: "Homepage/Blog", url: "https://wxn0brp.github.io", displayed: false },
+    { level: 1, name: "Homepage/Developer Website", url: "https://wxn0brp.github.io", displayed: false },
     { level: 2, name: "GitHub Profile", url: "https://github.com/wxn0brP", displayed: false },
     { level: 3, name: "ValtheraDB", url: "https://github.com/wxn0brP/ValtheraDB", displayed: false },
     { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", displayed: false },
