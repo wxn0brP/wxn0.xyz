@@ -34,13 +34,13 @@ body {
 }
 
 .executed {
-    color: #f00;
+    color: yellow;
 }
 
 #input {
     background-color: transparent;
     border: none;
-    color: #0f0;
+    color: yellow;
     font-family: 'Courier New', Courier, monospace;
     font-size: 16px;
     width: 100%;

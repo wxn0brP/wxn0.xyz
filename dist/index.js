@@ -381,7 +381,7 @@ function showLinks() {
 function welcome() {
   print("Welcome to <span class='system'>wxn0.xyz</span>", "system");
   print("This is a mini-game to discover the ecosystem.");
-  print("Version 0.0.3.");
+  print("Version 0.0.4.");
   print("Type 'help' to see available commands.");
 }
 loadGame();
@@ -390,6 +390,17 @@ loadGame();
 function printAvailable(name, description) {
   print(`  <span class="success">${name}</span> - ${description}`);
 }
+var commandsList = [
+  "help",
+  "status",
+  "hack",
+  "links",
+  "clear",
+  "reset",
+  "welcome",
+  "return",
+  "run"
+];
 function handleCommand(command) {
   if (!command.trim()) {
     return;
@@ -429,6 +440,14 @@ function handleCommand(command) {
       break;
     case "welcome":
       welcome();
+      break;
+    case "return":
+      localStorage.setItem("notHappened", "true");
+      location.reload();
+      break;
+    case "run":
+      localStorage.removeItem("run");
+      location.reload();
       break;
     default:
       print(`Command not found: <span class="error">${command}</span>`, "error");
@@ -475,5 +494,9 @@ window.addEventListener("keydown", (e) => {
     }
     input.focus();
   }
+});
+window.addEventListener("keyup", (e) => {
+  const cmd = input.value.split(" ")[0].toLowerCase();
+  input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
 });
 welcome();
