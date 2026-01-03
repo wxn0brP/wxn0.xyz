@@ -116,6 +116,10 @@ export function handleCommand(command: string) {
                 fileSystem.cat(args[1], true);
                 break;
             }
+            if (fullArgs === "make me a sandwich") {
+                print("Okay.", "success");
+                break;
+            }
             if (firstArg === "rm" && ["-rf", "-fr"].includes(args[1]) && args[2] === "/") {
                 systemDestroy();
                 break;
@@ -130,6 +134,13 @@ export function handleCommand(command: string) {
             break;
         case "whoami":
             print("guest@wxn0.xyz");
+            break;
+        case "make":
+            if (args.join(" ") === "me a sandwich") {
+                print("What? Make it yourself.", "system");
+            } else {
+                print("make: *** No targets specified and no makefile found. Stop.", "error");
+            }
             break;
         case "exit":
             print("There is no escape.", "error");
