@@ -78,7 +78,7 @@
 var page = qs("#page");
 var terminal = qs("#terminal");
 var START_DELAY = 30000;
-var GLITCH_TIME = 1200;
+var GLITCH_TIME = 2000;
 var firstRunOfTheDayTimeout;
 function loadTerminal() {
   terminal.style.display = "";
@@ -93,6 +93,13 @@ function loadTerminal() {
 }
 function loadAnimation() {
   page.classList.add("glitch", "shake");
+  document.querySelectorAll(".glitch-color").forEach((el) => {
+    el.style.color = "red";
+  });
+  document.querySelectorAll("*").forEach((el) => {
+    if (Math.random() < 0.5)
+      el.style.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+  });
   setTimeout(() => {
     page.classList.remove("shake");
   }, 500);
