@@ -82,8 +82,13 @@
             </header>
 
             <section class="about">
-                <h2>About Me</h2>
-                <button onclick="this.remove()">Click Me! I dare you.</button>
+                <h2>
+                    <a href="about" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        About Me
+                        <span style="font-size: 0.6em; color: var(--primary);">[More]</span>
+                    </a>
+                </h2>
+                <button onclick="goFullscreen();this.remove()">Click Me! I dare you.</button>
                 <p>
                     Software developer & security enthusiast.
                     Exploring the depths of
@@ -104,7 +109,12 @@
             </section>
 
             <section class="projects">
-                <h2>Key Projects</h2>
+                <h2>
+                    <a href="projects" style="text-decoration: none; color: inherit; cursor: pointer;">
+                        Key Projects
+                        <span style="font-size: 0.6em; color: var(--primary);">[View All]</span>
+                    </a>
+                </h2>
                 <div class="project-grid">
                     <div class="project-card">
                         <h3>
@@ -158,6 +168,7 @@
             <input type="text" id="input" autofocus autocomplete="off" />
         </div>
     </div>
+    <script src="./bg.js"></script>
     <script src="./dist/shake.js"></script>
 </body>
 
