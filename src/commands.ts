@@ -11,6 +11,7 @@ import {
 } from "./game";
 import { cat } from "./game/cat";
 import { startSnake } from "./game/snake";
+import { startPong } from "./game/pong";
 import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
 import { $store, hackingMission } from "./vars";
@@ -53,6 +54,7 @@ export const commandsList = [
     "vi",
     "rm",
     "snake",
+    "pong",
     "source",
 ]
 
@@ -94,9 +96,12 @@ export function handleCommand(command: string) {
             printAvailable("cat", "Read file content");
             if (userLevel < 2) break;
 
-            printAvailable("reset", "Reset your game progress");
             printAvailable("zhiva [name]", "Run Zhiva app");
             printAvailable("snake", "Play Snake (Earn XP!)");
+
+            if (userLevel < 3) break;
+            printAvailable("pong", "Play Pong (Earn XP!)");
+            printAvailable("reset", "Reset your game progress");
 
             break;
         case "status":
@@ -126,6 +131,10 @@ export function handleCommand(command: string) {
             break;
         case "snake":
             startSnake();
+            break;
+        case "pong":
+        case "ping":
+            startPong();
             break;
         case "return":
             localStorage.setItem("notHappened", "true");
