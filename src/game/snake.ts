@@ -1,3 +1,4 @@
+import { rand } from "@wxn0brp/flanker-ui/utils";
 import { input, output, print } from "../ui";
 import { $store } from "../vars";
 import { addXp } from "../xp";
@@ -119,6 +120,7 @@ export function startSnake() {
         }
     }
     window.addEventListener("keydown", handleKey);
+    let growthRemaining = 0;
 
     function update() {
         direction = nextDirection;
@@ -149,8 +151,11 @@ export function startSnake() {
             score++;
             addXp(2);
             spawnApple();
-        } else {
+            growthRemaining += rand(1, 8);
+        } else if (!growthRemaining) {
             snake.pop();
+        } else {
+            growthRemaining--;
         }
 
         draw();
@@ -220,6 +225,11 @@ export function startSnake() {
             if (!collideWall && !collideSnake) {
                 valid = true;
             }
+        }
+
+        // 20% chance of teleporting the apple in 5 seconds
+        if (Math.random() < 0.2) {
+            setTimeout(spawnApple, 5_000);
         }
     }
 
