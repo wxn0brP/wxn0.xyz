@@ -486,6 +486,19 @@ function checkUnlocks() {
   });
   saveGame();
 }
+// src/xp.ts
+function addXp(xp) {
+  incrementCell($store.xp, xp);
+  if ($store.xp.get() >= xpToNextLevel) {
+    incrementCell($store.level, 1);
+    decrementCell($store.xp, xpToNextLevel);
+    print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
+    print(`Check 'help' for new commands!`, "system");
+    checkUnlocks();
+  }
+  saveGame();
+}
+
 // src/game/hacking.ts
 function failHack() {
   print("Hack failed. Connection lost.", "error");
@@ -499,15 +512,8 @@ function tryHack(input2) {
   print("$ " + input2, "executed");
   if (input2.toLowerCase() === hackingMission.command) {
     const xpGained = Math.floor(Math.random() * 30) + 20;
-    incrementCell($store.xp, xpGained);
     print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
-    if ($store.xp.get() >= xpToNextLevel) {
-      incrementCell($store.level, 1);
-      decrementCell($store.xp, xpToNextLevel);
-      print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
-      checkUnlocks();
-    }
-    saveGame();
+    addXp(xpGained);
   } else {
     print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
     failHack();
@@ -561,16 +567,9 @@ async function startMining() {
   const success = Math.random() > 0.3;
   if (success) {
     const xpGained = Math.floor(Math.random() * 15) + 5;
-    incrementCell($store.xp, xpGained);
     print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
     print(`Reward: <span class="success">${xpGained}</span> XP`);
-    if ($store.xp.get() >= xpToNextLevel) {
-      incrementCell($store.level, 1);
-      decrementCell($store.xp, xpToNextLevel);
-      print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
-      checkUnlocks();
-    }
-    saveGame();
+    addXp(xpGained);
   } else {
     print("Mining failed. Invalid share.", "error");
   }
@@ -952,12 +951,7 @@ function startSnake() {
     snake.unshift(newHead);
     if (rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, apple.x, apple.y, CELL_SIZE, CELL_SIZE)) {
       score++;
-      incrementCell($store.xp, 2);
-      if ($store.xp.get() >= xpToNextLevel) {
-        incrementCell($store.level, 1);
-        decrementCell($store.xp, xpToNextLevel);
-      }
-      saveGame();
+      addXp(2);
       spawnApple();
     } else {
       snake.pop();
@@ -1023,8 +1017,7 @@ function startSnake() {
     };
     window.removeEventListener("keydown", handleKey);
     window.addEventListener("keydown", closeHandler);
-    print("Gained " + score * 2 + " xp!");
-    checkUnlocks();
+    print("Snake Game Over! Gained " + score * 2 + " xp!");
   }
   function cleanup() {
     clearInterval(gameLoopId);
@@ -1091,18 +1084,23 @@ function handleCommand(command) {
   print("$ " + command);
   switch (cmd.toLowerCase()) {
     case "help":
+      let userLevel = $store.level.get();
       print("Available commands:");
       printAvailable("help", "Show this help message");
       printAvailable("status", "Show your current level and XP");
       printAvailable("hack", "Start a hacking mission to gain XP");
-      printAvailable("mine", "Mine for XP (Process intensive)");
       printAvailable("links", "Show unlocked links");
+      printAvailable("clear", "Clear the terminal");
+      if (userLevel < 1)
+        break;
+      printAvailable("mine", "Mine for XP (Process intensive)");
+      printAvailable("date", "Show current system time");
       printAvailable("ls/dir", "List directory contents");
       printAvailable("cd", "Change directory");
       printAvailable("cat", "Read file content");
-      printAvailable("clear", "Clear the terminal");
+      if (userLevel < 2)
+        break;
       printAvailable("reset", "Reset your game progress");
-      printAvailable("date", "Show current system time");
       printAvailable("zhiva [name]", "Run Zhiva app");
       printAvailable("snake", "Play Snake (Earn XP!)");
       break;
@@ -1237,6 +1235,13 @@ function handleCommand(command) {
       if (!firstArg.includes("/"))
         firstArg = `wxn0brP/${firstArg}`;
       location.href = `zhiva://start/${firstArg}`;
+      break;
+    case "xp":
+      if (!isNaN(+firstArg)) {
+        addXp(+firstArg);
+        print("Gained " + firstArg + " XP! Cheater :/", "success");
+        break;
+      }
       break;
     default:
       print(`Command not found: <span class="error">${command}</span>`, "error");
