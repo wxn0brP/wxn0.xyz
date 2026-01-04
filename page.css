@@ -234,3 +234,15 @@ footer {
 #stick:hover {
     color: #888;
 }
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: var(--primary);
+    text-decoration: none;
+    font-family: 'Courier New', monospace;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}

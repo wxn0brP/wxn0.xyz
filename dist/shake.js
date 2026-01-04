@@ -78,7 +78,7 @@
 var page = qs("#page");
 var terminal = qs("#terminal");
 var START_DELAY = 30000;
-var GLITCH_TIME = 2000;
+var GLITCH_TIME = 1600;
 var firstRunOfTheDayTimeout;
 function loadTerminal() {
   terminal.style.display = "";
@@ -89,6 +89,7 @@ function loadTerminal() {
   const script = document.createElement("script");
   script.src = "./dist/index.js";
   document.body.appendChild(script);
+  localStorage.removeItem("notHappened");
 }
 function loadAnimation() {
   page.classList.add("glitch", "shake");
@@ -125,48 +126,8 @@ function typeWriter(text, element, speed = 100) {
   }
   type();
 }
-function initCanvas() {
-  const canvas = qs("#bg-effect");
-  if (!canvas)
-    return;
-  const ctx = canvas.getContext("2d");
-  if (!ctx)
-    return;
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-  window.addEventListener("resize", () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  });
-  const particles = [];
-  const particleCount = 50;
-  for (let i = 0;i < particleCount; i++) {
-    particles.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      s: Math.random() * 2 + 1,
-      v: Math.random() * 0.5 + 0.1
-    });
-  }
-  function draw() {
-    ctx.fillStyle = "rgba(5, 5, 5, 0.1)";
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
-    particles.forEach((p) => {
-      p.y += p.v;
-      if (p.y > height)
-        p.y = 0;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
-      ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
 var run = localStorage.getItem("run");
 var firstRunOfTheDay = !run || Date.now() > Number(+run) + 24 * 60 * 60 * 1000;
-initCanvas();
 var titleElement = qs("#typewriter");
 if (titleElement)
   typeWriter("wxn0.xyz", titleElement);
@@ -175,7 +136,6 @@ if (localStorage.getItem("notHappened")) {
   const stick = qs("#stick");
   if (stick)
     stick.innerHTML = "Double-click to initialize protocol...";
-  localStorage.removeItem("notHappened");
   console.log("Mode", "Not happened");
 } else if (firstRunOfTheDay) {
   firstRunOfTheDayTimeout = setTimeout(loadAnimation, START_DELAY);
@@ -187,7 +147,7 @@ if (localStorage.getItem("notHappened")) {
 } else {
   loadTerminal();
 }
-function goFullscreen() {
+window.goFullscreen = () => {
   const elem = document.documentElement;
   if (elem.requestFullscreen) {
     elem.requestFullscreen();
@@ -196,5 +156,4 @@ function goFullscreen() {
   } else if (elem.msRequestFullscreen) {
     elem.msRequestFullscreen();
   }
-}
-document.addEventListener("click", goFullscreen, { once: true });
+};
