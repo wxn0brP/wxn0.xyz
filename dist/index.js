@@ -1299,6 +1299,16 @@ var historyIndex = -1;
 var moveCursorToEnd = debounce(() => {
   input.setSelectionRange(input.value.length, input.value.length);
 }, 50);
+function calculateInputWidth() {
+  const width = input.value.length * 10 + 200;
+  return Math.min(width, window.innerWidth - 20);
+}
+setTimeout(() => {
+  input.style.width = calculateInputWidth() + "px";
+}, 20);
+input.addEventListener("input", () => {
+  input.style.width = calculateInputWidth() + "px";
+});
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     const command = input.value;
@@ -1374,3 +1384,12 @@ setInterval(() => {
     terminal.classList.remove("glitch");
   }, rand(100, 1300));
 }, 20000);
+var cursorTimeout;
+window.addEventListener("mousemove", () => {
+  document.body.style.cursor = "";
+  window.clearTimeout(cursorTimeout);
+  cursorTimeout = window.setTimeout(() => {
+    document.body.style.cursor = "none";
+  }, 1000);
+});
+document.body.style.cursor = "none";
