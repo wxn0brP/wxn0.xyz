@@ -30,6 +30,9 @@ jobs:
       - name: Prepare
         run: |
           cp -r dist public
+          curl -o public/404.html https://raw.githubusercontent.com/wxn0brP/wxn0brp.github.io/refs/heads/master/public/404.html
+          mkdir -p public/errors
+          cp public/404.html public/errors/404.html
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
