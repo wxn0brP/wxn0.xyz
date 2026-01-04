@@ -1,10 +1,10 @@
 import "@wxn0brp/flanker-ui/html";
-import { debounce } from "@wxn0brp/flanker-ui/utils";
+import { debounce, rand } from "@wxn0brp/flanker-ui/utils";
 import { commandsList, handleCommand } from "./commands";
 import { welcome } from "./game";
 import { loadGame } from "./save";
 import { startParams } from "./start";
-import { input } from "./ui";
+import { clear, input, terminal } from "./ui";
 
 const commandHistory: string[] = [];
 let historyIndex = -1;
@@ -37,6 +37,9 @@ input.addEventListener("keydown", (e) => {
             historyIndex = commandHistory.length;
             input.value = "";
         }
+    } else if (e.ctrlKey && e.key === "l") {
+        clear();
+        e.preventDefault();
     }
 });
 
@@ -77,3 +80,11 @@ window.addEventListener("keydown", (e) => {
 
 loadGame();
 welcome().then(startParams);
+
+setInterval(() => {
+    if (Math.random() > 0.2) return;
+    terminal.classList.add("glitch");
+    setTimeout(() => {
+        terminal.classList.remove("glitch");
+    }, rand(100, 1_300));
+}, 20_000);

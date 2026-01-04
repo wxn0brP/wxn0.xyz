@@ -12,7 +12,6 @@ function loadTerminal() {
 
     qs<HTMLCanvasElement>("#bg-effect")?.remove();
     qs<HTMLLinkElement>("#style").href = "terminal.css";
-    qs<HTMLLinkElement>("#glitch-style")?.remove();
     qs("title").html("Explorer - wxn0.xyz");
 
     const script = document.createElement("script");
