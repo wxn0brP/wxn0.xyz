@@ -85,7 +85,6 @@ function loadTerminal() {
   page.remove();
   qs("#bg-effect")?.remove();
   qs("#style").href = "terminal.css";
-  qs("#glitch-style")?.remove();
   qs("title").html("Explorer - wxn0.xyz");
   const script = document.createElement("script");
   script.src = "./dist/index.js";

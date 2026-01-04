@@ -687,7 +687,7 @@ async function welcome() {
   print("----------------------------------------", "dim");
   print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
   print("Kernel v2.0.4-build.99 loaded.");
-  print("System Shell v0.0.6 loaded.");
+  print("System Shell v0.0.7 loaded.");
   print("----------------------------------------", "dim");
   await delay(300);
   print("Type '<span class='success'>help</span>' to list available commands.");
@@ -1323,6 +1323,9 @@ input.addEventListener("keydown", (e) => {
       historyIndex = commandHistory.length;
       input.value = "";
     }
+  } else if (e.ctrlKey && e.key === "l") {
+    clear();
+    e.preventDefault();
   }
 });
 window.addEventListener("keydown", (e) => {
@@ -1363,3 +1366,11 @@ window.addEventListener("keydown", (e) => {
 });
 loadGame();
 welcome().then(startParams);
+setInterval(() => {
+  if (Math.random() > 0.2)
+    return;
+  terminal.classList.add("glitch");
+  setTimeout(() => {
+    terminal.classList.remove("glitch");
+  }, rand(100, 1300));
+}, 20000);
