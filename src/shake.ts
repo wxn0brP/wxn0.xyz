@@ -3,7 +3,7 @@ const page = qs("#page");
 const terminal = qs("#terminal");
 
 const START_DELAY = 30_000;
-const GLITCH_TIME = 1_200;
+const GLITCH_TIME = 2_000;
 let firstRunOfTheDayTimeout: number;
 
 function loadTerminal() {
@@ -22,6 +22,13 @@ function loadTerminal() {
 
 function loadAnimation() {
     page.classList.add("glitch", "shake");
+    document.querySelectorAll<HTMLElement>(".glitch-color").forEach((el) => {
+        el.style.color = "red";
+    });
+    document.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        if (Math.random() < 0.5)
+            el.style.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+    })
 
     setTimeout(() => {
         page.classList.remove("shake");
