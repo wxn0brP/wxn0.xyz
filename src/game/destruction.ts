@@ -1,5 +1,6 @@
-import { input, print } from "../ui";
 import { delay } from "@wxn0brp/flanker-ui/utils";
+import { reloadWithParams } from "../start";
+import { input, print } from "../ui";
 
 export async function systemDestroy() {
     input.disabled = true;
@@ -45,7 +46,7 @@ export async function systemDestroy() {
         "Rebooting into reality..."
     ];
 
-    const statusEl = document.getElementById("bsod-status")!;
+    const statusEl = qs("#bsod-status")!;
     for (let i = 0; i < funnyMessages.length; i++) {
         await delay(800 + Math.random() * 1000);
         statusEl.textContent = `${Math.floor((i / funnyMessages.length) * 100)}% complete - ${funnyMessages[i]}`;
@@ -54,5 +55,8 @@ export async function systemDestroy() {
     await delay(1000);
     statusEl.textContent = "100% complete - Restarting...";
     await delay(1000);
-    location.reload();
+    reloadWithParams([
+        "reset",
+        "echo 'System was corrupted. Save data destroyed. Starting from a clean state.'",
+    ]);
 }

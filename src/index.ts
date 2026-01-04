@@ -3,6 +3,7 @@ import { debounce } from "@wxn0brp/flanker-ui/utils";
 import { commandsList, handleCommand } from "./commands";
 import { welcome } from "./game";
 import { loadGame } from "./save";
+import { startParams } from "./start";
 import { input } from "./ui";
 
 const commandHistory: string[] = [];
@@ -75,4 +76,4 @@ window.addEventListener("keydown", (e) => {
 });
 
 loadGame();
-welcome();
+welcome().then(startParams);
