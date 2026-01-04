@@ -577,6 +577,30 @@ async function startMining() {
   isBusy = false;
   input.focus();
 }
+// src/start.ts
+async function startParams() {
+  const params = new URLSearchParams(location.search);
+  const i = params.get("i");
+  if (!i)
+    return;
+  window.history.replaceState(null, "", "/");
+  const instructions = i.replaceAll(",", " ").split(";");
+  for (const instruction of instructions) {
+    if (instruction === "")
+      continue;
+    if (instruction.split(" ")[0] === "sleep") {
+      await delay(+instruction.split(" ")[1]);
+      continue;
+    }
+    await delay(1000);
+    handleCommand(instruction);
+  }
+}
+function reloadWithParams(commands) {
+  commands = commands.map((cmd) => cmd.replaceAll(" ", ","));
+  location.href = "/?i=" + commands.join(";");
+}
+
 // src/game/destruction.ts
 async function systemDestroy() {
   input.disabled = true;
@@ -616,7 +640,7 @@ async function systemDestroy() {
     "Cleaning up broken dreams...",
     "Rebooting into reality..."
   ];
-  const statusEl = document.getElementById("bsod-status");
+  const statusEl = qs("#bsod-status");
   for (let i = 0;i < funnyMessages.length; i++) {
     await delay(800 + Math.random() * 1000);
     statusEl.textContent = `${Math.floor(i / funnyMessages.length * 100)}% complete - ${funnyMessages[i]}`;
@@ -624,7 +648,10 @@ async function systemDestroy() {
   await delay(1000);
   statusEl.textContent = "100% complete - Restarting...";
   await delay(1000);
-  location.reload();
+  reloadWithParams([
+    "reset",
+    "echo 'System was corrupted. Save data destroyed. Starting from a clean state.'"
+  ]);
 }
 // src/game/status.ts
 function showStatus() {
@@ -1318,4 +1345,4 @@ window.addEventListener("keydown", (e) => {
   }
 });
 loadGame();
-welcome();
+welcome().then(startParams);
