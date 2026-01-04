@@ -75,6 +75,9 @@
 })();
 
 // node_modules/@wxn0brp/flanker-ui/dist/utils.js
+function rand(min, max) {
+  return Math.round(Math.random() * (max - min) + min);
+}
 function debounce(func, wait = 100) {
   let timeout;
   return function executedFunction(...args) {
@@ -958,6 +961,7 @@ function startSnake() {
     }
   }
   window.addEventListener("keydown", handleKey);
+  let growthRemaining = 0;
   function update() {
     direction = nextDirection;
     const head = snake[0];
@@ -980,8 +984,11 @@ function startSnake() {
       score++;
       addXp(2);
       spawnApple();
-    } else {
+      growthRemaining += rand(1, 8);
+    } else if (!growthRemaining) {
       snake.pop();
+    } else {
+      growthRemaining--;
     }
     draw();
   }
@@ -1017,6 +1024,9 @@ function startSnake() {
       if (!collideWall && !collideSnake) {
         valid = true;
       }
+    }
+    if (Math.random() < 0.2) {
+      setTimeout(spawnApple, 5000);
     }
   }
   function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
