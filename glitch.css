@@ -506,6 +506,7 @@
         glitch-color 1.3s linear infinite;
     position: relative;
     z-index: 100;
+    cursor: none;
 }
 
 @keyframes shake {
