@@ -1094,7 +1094,8 @@ var commandsList = [
   "vim",
   "vi",
   "rm",
-  "snake"
+  "snake",
+  "source"
 ];
 function handleCommand(command) {
   if (!command.trim()) {
@@ -1118,6 +1119,7 @@ function handleCommand(command) {
       printAvailable("hack", "Start a hacking mission to gain XP");
       printAvailable("links", "Show unlocked links");
       printAvailable("clear", "Clear the terminal");
+      printAvailable("source", "Source code");
       if (userLevel < 1)
         break;
       printAvailable("mine", "Mine for XP (Process intensive)");
@@ -1269,6 +1271,11 @@ function handleCommand(command) {
         print("Gained " + firstArg + " XP! Cheater :/", "success");
         break;
       }
+      break;
+    case "github":
+    case "git":
+    case "source":
+      window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
       break;
     default:
       print(`Command not found: <span class="error">${command}</span>`, "error");
