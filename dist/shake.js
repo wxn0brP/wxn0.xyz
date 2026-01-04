@@ -97,8 +97,10 @@ function loadAnimation() {
     el.style.color = "red";
   });
   document.querySelectorAll("*").forEach((el) => {
-    if (Math.random() < 0.5)
+    if (Math.random() < 0.5) {
+      el.classList.add("glitch-color");
       el.style.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+    }
   });
   setTimeout(() => {
     page.classList.remove("shake");
@@ -106,6 +108,10 @@ function loadAnimation() {
   setTimeout(() => {
     loadTerminal();
     localStorage.setItem("run", String(Date.now()));
+    document.querySelectorAll(".glitch-color").forEach((el) => {
+      el.classList.remove("glitch-color");
+      el.style.color = "";
+    });
   }, GLITCH_TIME);
 }
 function typeWriter(text, element, speed = 100) {
