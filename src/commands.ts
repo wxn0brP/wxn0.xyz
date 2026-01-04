@@ -11,6 +11,7 @@ import {
 } from "./game";
 import { cat } from "./game/cat";
 import { resetGame } from "./save";
+import { startSnake } from "./game/snake";
 import { clear, print, printCommand } from "./ui";
 import { hackingMission } from "./vars";
 
@@ -49,7 +50,8 @@ export const commandsList = [
     "make",
     "vim",
     "vi",
-    "rm"
+    "rm",
+    "snake",
 ]
 
 export function handleCommand(command: string) {
@@ -85,6 +87,7 @@ export function handleCommand(command: string) {
             printAvailable("reset", "Reset your game progress");
             printAvailable("date", "Show current system time");
             printAvailable("zhiva [name]", "Run Zhiva app");
+            printAvailable("snake", "Play Snake (Earn XP!)");
             break;
         case "status":
             showStatus();
@@ -110,6 +113,9 @@ export function handleCommand(command: string) {
             break;
         case "welcome":
             welcome();
+            break;
+        case "snake":
+            startSnake();
             break;
         case "return":
             localStorage.setItem("notHappened", "true");
