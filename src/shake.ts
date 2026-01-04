@@ -130,3 +130,16 @@ else if (firstRunOfTheDay) {
 } else {
     loadTerminal();
 }
+
+function goFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if ((elem as any).webkitRequestFullscreen) {
+        (elem as any).webkitRequestFullscreen();
+    } else if ((elem as any).msRequestFullscreen) {
+        (elem as any).msRequestFullscreen();
+    }
+}
+
+document.addEventListener("click", goFullscreen, { once: true });
