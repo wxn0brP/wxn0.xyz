@@ -1,19 +1,20 @@
 import { fileSystem } from "./filesystem";
 import {
+    openVim,
     showLinks,
     showStatus,
     startHack,
     startMining,
     systemDestroy,
     tryHack,
-    welcome,
-    openVim
+    welcome
 } from "./game";
 import { cat } from "./game/cat";
-import { resetGame } from "./save";
 import { startSnake } from "./game/snake";
+import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
-import { hackingMission } from "./vars";
+import { $store, hackingMission } from "./vars";
+import { addXp } from "./xp";
 
 const box = qs(".prompt");
 
@@ -74,20 +75,27 @@ export function handleCommand(command: string) {
 
     switch (cmd.toLowerCase()) {
         case "help":
+            let userLevel = $store.level.get();
             print("Available commands:");
+
             printAvailable("help", "Show this help message");
             printAvailable("status", "Show your current level and XP");
             printAvailable("hack", "Start a hacking mission to gain XP");
-            printAvailable("mine", "Mine for XP (Process intensive)");
             printAvailable("links", "Show unlocked links");
+            printAvailable("clear", "Clear the terminal");
+            if (userLevel < 1) break;
+
+            printAvailable("mine", "Mine for XP (Process intensive)");
+            printAvailable("date", "Show current system time");
             printAvailable("ls/dir", "List directory contents");
             printAvailable("cd", "Change directory");
             printAvailable("cat", "Read file content");
-            printAvailable("clear", "Clear the terminal");
+            if (userLevel < 2) break;
+
             printAvailable("reset", "Reset your game progress");
-            printAvailable("date", "Show current system time");
             printAvailable("zhiva [name]", "Run Zhiva app");
             printAvailable("snake", "Play Snake (Earn XP!)");
+
             break;
         case "status":
             showStatus();
@@ -219,6 +227,13 @@ export function handleCommand(command: string) {
             }
             if (!firstArg.includes("/")) firstArg = `wxn0brP/${firstArg}`;
             location.href = `zhiva://start/${firstArg}`;
+            break;
+        case "xp":
+            if (!isNaN(+firstArg)) {
+                addXp(+firstArg);
+                print("Gained " + firstArg + " XP! Cheater :/", "success");
+                break;
+            }
             break;
         default:
             print(`Command not found: <span class="error">${command}</span>`, "error");

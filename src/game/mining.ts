@@ -1,9 +1,7 @@
-import { $store, hackingMission, xpToNextLevel } from "../vars";
-import { input, print } from "../ui";
-import { saveGame } from "../save";
-import { decrementCell, incrementCell } from "@wxn0brp/flanker-ui/storeUtils";
 import { delay } from "@wxn0brp/flanker-ui/utils";
-import { checkUnlocks } from "./progression";
+import { input, print } from "../ui";
+import { hackingMission } from "../vars";
+import { addXp } from "../xp";
 
 let isBusy = false;
 
@@ -25,17 +23,9 @@ export async function startMining() {
     const success = Math.random() > 0.3; // 70% chance of success
     if (success) {
         const xpGained = Math.floor(Math.random() * 15) + 5; // 5-20 XP
-        incrementCell($store.xp, xpGained);
         print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
         print(`Reward: <span class="success">${xpGained}</span> XP`);
-
-        if ($store.xp.get() >= xpToNextLevel) {
-            incrementCell($store.level, 1);
-            decrementCell($store.xp, xpToNextLevel);
-            print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
-            checkUnlocks();
-        }
-        saveGame();
+        addXp(xpGained);
     } else {
         print("Mining failed. Invalid share.", "error");
     }

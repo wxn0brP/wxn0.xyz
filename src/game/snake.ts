@@ -1,8 +1,6 @@
 import { input, output, print } from "../ui";
-import { $store, xpToNextLevel } from "../vars";
-import { incrementCell, decrementCell } from "@wxn0brp/flanker-ui/storeUtils";
-import { checkUnlocks } from "./progression";
-import { saveGame } from "../save";
+import { $store } from "../vars";
+import { addXp } from "../xp";
 
 interface Point {
     x: number;
@@ -149,12 +147,7 @@ export function startSnake() {
 
         if (rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, apple.x, apple.y, CELL_SIZE, CELL_SIZE)) {
             score++;
-            incrementCell($store.xp, 2);
-            if ($store.xp.get() >= xpToNextLevel) {
-                incrementCell($store.level, 1);
-                decrementCell($store.xp, xpToNextLevel);
-            }
-            saveGame();
+            addXp(2);
             spawnApple();
         } else {
             snake.pop();
@@ -260,8 +253,7 @@ export function startSnake() {
         window.removeEventListener("keydown", handleKey);
         window.addEventListener("keydown", closeHandler);
 
-        print("Gained " + score * 2 + " xp!");
-        checkUnlocks();
+        print("Snake Game Over! Gained " + score * 2 + " xp!");
     }
 
     function cleanup() {

@@ -1,9 +1,7 @@
-import { $store, hackingMission, targets, vulnerabilities, xpToNextLevel } from "../vars";
-import { print } from "../ui";
-import { saveGame } from "../save";
-import { decrementCell, incrementCell } from "@wxn0brp/flanker-ui/storeUtils";
 import { delay } from "@wxn0brp/flanker-ui/utils";
-import { checkUnlocks } from "./progression";
+import { print } from "../ui";
+import { hackingMission, targets, vulnerabilities } from "../vars";
+import { addXp } from "../xp";
 
 function failHack() {
     print("Hack failed. Connection lost.", "error");
@@ -21,15 +19,8 @@ export function tryHack(input: string) {
 
     if (input.toLowerCase() === hackingMission.command) {
         const xpGained = Math.floor(Math.random() * 30) + 20;
-        incrementCell($store.xp, xpGained);
         print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
-        if ($store.xp.get() >= xpToNextLevel) {
-            incrementCell($store.level, 1);
-            decrementCell($store.xp, xpToNextLevel);
-            print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
-            checkUnlocks();
-        }
-        saveGame();
+        addXp(xpGained);
     } else {
         print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
         failHack();
