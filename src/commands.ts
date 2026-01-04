@@ -53,6 +53,7 @@ export const commandsList = [
     "vi",
     "rm",
     "snake",
+    "source",
 ]
 
 export function handleCommand(command: string) {
@@ -83,6 +84,7 @@ export function handleCommand(command: string) {
             printAvailable("hack", "Start a hacking mission to gain XP");
             printAvailable("links", "Show unlocked links");
             printAvailable("clear", "Clear the terminal");
+            printAvailable("source", "Source code");
             if (userLevel < 1) break;
 
             printAvailable("mine", "Mine for XP (Process intensive)");
@@ -234,6 +236,11 @@ export function handleCommand(command: string) {
                 print("Gained " + firstArg + " XP! Cheater :/", "success");
                 break;
             }
+            break;
+        case "github":
+        case "git":
+        case "source":
+            window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
             break;
         default:
             print(`Command not found: <span class="error">${command}</span>`, "error");
