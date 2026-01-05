@@ -35,18 +35,18 @@ export function startPong() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    const PADDLE_WIDTH = 10;
+    const PADDLE_WIDTH = 15;
     const PADDLE_HEIGHT = 150;
     const BALL_SIZE = 10;
     const PLAYER_SPEED = 12;
-    const AI_SPEED = 8;
+    const AI_SPEED = 10;
 
     let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
     let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
     let ballX = canvas.width / 2;
     let ballY = canvas.height / 2;
-    let ballSpeedX = 5;
-    let ballSpeedY = 5;
+    let ballSpeedX = 10;
+    let ballSpeedY = 10;
     let playerScore = 0;
     let aiScore = 0;
     let gameLoopId: number;
@@ -74,7 +74,7 @@ export function startPong() {
         ballX = canvas.width / 2;
         ballY = canvas.height / 2;
         ballSpeedX = -ballSpeedX;
-        ballSpeedY = (Math.random() - 0.5) * 10;
+        ballSpeedY = (Math.random() - 0.5) * 20;
     }
 
     function update() {
@@ -181,6 +181,7 @@ export function startPong() {
         input.focus();
         print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
         const xp = playerScore * 5 - aiScore;
+        print(`You earned ${xp} XP!`);
         addXp(xp);
         if (playerScore >= 10) {
             unlockAchievement("pong_winner");

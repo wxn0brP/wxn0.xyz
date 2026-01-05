@@ -10,8 +10,7 @@ import { cmdMail } from "./mail";
 
 import { print, printCommand } from "../ui";
 import { unlockAchievement, achievementCounters } from "../achievements";
-import { hackingMission } from "../vars";
-import { tryHack } from "../game";
+import { hackingMission, tryHack } from "../game";
 import { fileSystem } from "../filesystem";
 
 interface CommandContext {

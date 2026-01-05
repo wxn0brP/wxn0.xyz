@@ -63,7 +63,11 @@ export function startSnake() {
     const walls: Wall[] = [];
 
     const terminalText = output.innerText || "VOID ERROR NULL SYSTEM FAILURE";
-    const words = terminalText.split(" ").filter(w => w.length > 3 && w.length < 20);
+    const words = terminalText
+        .split(" ")
+        .filter(w => w.length > 3 && w.length < 20)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 150);
 
     words.forEach(word => {
         const metrics = ctx.measureText(word);

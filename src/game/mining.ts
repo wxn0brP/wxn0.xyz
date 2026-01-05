@@ -1,18 +1,11 @@
 import { incrementCell } from "@wxn0brp/flanker-ui/storeUtils";
 import { delay } from "@wxn0brp/flanker-ui/utils";
 import { input, print } from "../ui";
-import { hackingMission, $store } from "../vars";
+import { $store } from "../vars";
 import { addXp } from "../xp";
 import { achievementCounters, unlockAchievement } from "../achievements";
 
-let isBusy = false;
-
 export async function startMining() {
-    if (isBusy || hackingMission.active) {
-        print("System is busy.", "error");
-        return;
-    }
-    isBusy = true;
     input.disabled = true;
 
     print("Initiating crypto-mining sequence...", "system");
@@ -40,6 +33,5 @@ export async function startMining() {
     }
 
     input.disabled = false;
-    isBusy = false;
     input.focus();
 }
