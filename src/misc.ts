@@ -20,6 +20,7 @@ function resetIdleTimer() {
         stopMatrixEffect();
         isIdle = false;
         print("User motion detected. Matrix simulation suspended.", "dim");
+        document.title = originalTitle;
     }
 
     clearTimeout(idleTimeout);
@@ -27,6 +28,7 @@ function resetIdleTimer() {
         print("User idle. Engaging Matrix simulation...", "warning");
         isIdle = true;
         startMatrixEffect(0);
+        document.title = "You are being watched...";
     }, IDLE_TIME);
 }
 
