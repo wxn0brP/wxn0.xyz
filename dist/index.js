@@ -867,6 +867,16 @@ class VirtualFileSystem {
       });
     }
   }
+  getFilesAndDirs(path) {
+    if (!this.loaded)
+      return [];
+    const target = this.resolvePath(path);
+    if (!target)
+      return [];
+    if (target.type !== "dir")
+      return [];
+    return Object.keys(target.children).filter((k) => !target.children[k].hidden);
+  }
   cd(path) {
     if (!this.loaded)
       return;
@@ -1962,6 +1972,19 @@ function startShop(args = "") {
   });
   print("<br>Usage: shop buy <item_id>", "dim");
 }
+// src/complete.ts
+function handleAutoComplete(cmd, split) {
+  if (["ls", "cd", "cat"].includes(cmd)) {
+    const files = fileSystem.getFilesAndDirs(fileSystem.getCWD());
+    const matchingFiles = files.filter((file) => file.startsWith(split[1]));
+    if (matchingFiles.length === 1) {
+      split[1] = matchingFiles[0];
+      input.value = split.join(" ");
+      moveCursorToEnd();
+    }
+  }
+}
+
 // src/input.ts
 var commandHistory = [];
 var historyIndex = -1;
@@ -2003,6 +2026,20 @@ input.addEventListener("keydown", (e) => {
   } else if (e.ctrlKey && e.key === "l") {
     clear();
     e.preventDefault();
+  } else if (e.key === "Tab") {
+    e.preventDefault();
+    const split = input.value.split(" ");
+    const cmd = split[0].toLowerCase();
+    if (split.length > 1) {
+      handleAutoComplete(cmd, split);
+    } else {
+      const matchingCommands = commandsList.filter((command) => command.startsWith(cmd));
+      if (matchingCommands.length === 1) {
+        split[0] = matchingCommands[0];
+        input.value = split.join(" ");
+        moveCursorToEnd();
+      }
+    }
   }
 });
 window.addEventListener("keydown", (e) => {
