@@ -1,11 +1,12 @@
 import { debounce } from "@wxn0brp/flanker-ui/utils";
 import { handleCommand, commandsList } from "./commands";
 import { input, clear } from "./ui";
+import { handleAutoComplete } from "./complete";
 
 const commandHistory: string[] = [];
 let historyIndex = -1;
 
-const moveCursorToEnd = debounce(() => {
+export const moveCursorToEnd = debounce(() => {
     input.setSelectionRange(input.value.length, input.value.length);
 }, 50);
 
@@ -25,6 +26,7 @@ input.addEventListener("keydown", (e) => {
         historyIndex = commandHistory.length;
         input.value = "";
         handleCommand(command);
+
     } else if (e.key === "ArrowUp") {
         if (historyIndex > 0) {
             historyIndex--;
@@ -32,6 +34,7 @@ input.addEventListener("keydown", (e) => {
             moveCursorToEnd();
         }
         setInputWidth();
+
     } else if (e.key === "ArrowDown") {
         if (historyIndex < commandHistory.length - 1) {
             historyIndex++;
@@ -42,9 +45,25 @@ input.addEventListener("keydown", (e) => {
             input.value = "";
         }
         setInputWidth();
+
     } else if (e.ctrlKey && e.key === "l") {
         clear();
         e.preventDefault();
+
+    } else if (e.key === "Tab") {
+        e.preventDefault();
+        const split = input.value.split(" ");
+        const cmd = split[0].toLowerCase();
+        if (split.length > 1) {
+            handleAutoComplete(cmd, split);
+        } else {
+            const matchingCommands = commandsList.filter((command) => command.startsWith(cmd));
+            if (matchingCommands.length === 1) {
+                split[0] = matchingCommands[0];
+                input.value = split.join(" ");
+                moveCursorToEnd();
+            }
+        }
     }
 });
 

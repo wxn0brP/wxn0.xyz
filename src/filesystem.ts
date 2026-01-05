@@ -133,6 +133,14 @@ class VirtualFileSystem {
         }
     }
 
+    public getFilesAndDirs(path: string): string[] {
+        if (!this.loaded) return [];
+        const target = this.resolvePath(path);
+        if (!target) return [];
+        if (target.type !== "dir") return [];
+        return Object.keys(target.children).filter(k => !target.children![k].hidden);
+    }
+
     public cd(path: string) {
         if (!this.loaded) return;
         if (!path) {
