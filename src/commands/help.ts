@@ -55,4 +55,10 @@ export function cmdHelp() {
     printAvailable("reset", "Reset your game progress");
     printAvailable("coinflip", "Flip a coin");
     printAvailable("matrix", "Enter the Matrix");
+
+    if (userLevel < 6) return;
+
+    // Level 6
+    printAvailable("stats", "How many times have you cleared the terminal?");
+
 }

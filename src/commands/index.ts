@@ -7,7 +7,7 @@ import { cmdCat, cmdCd, cmdLs } from "./filesystem";
 import { cmd42, cmdCoinflip, cmdEcho, cmdHello, cmdKonami, cmdMake, cmdMatrix, cmdSudo } from "./fun";
 import { cmdPong, cmdSnake, cmdZhiva } from "./games";
 import { cmdHelp } from "./help";
-import { cmdAchievements, cmdStatus } from "./info";
+import { cmdAchievements, cmdStats, cmdStatus, incrementStats } from "./info";
 import { cmdMail } from "./mail";
 import { cmdNews } from "./news";
 import { cmdClear, cmdExit, cmdReset, cmdReturn, cmdRun, cmdSuglite, cmdWelcome } from "./system";
@@ -28,6 +28,7 @@ const registry: Record<string, CommandDefinition> = {
     // Help & Info
     help: { fn: () => cmdHelp() },
     status: { fn: () => cmdStatus() },
+    stats: { fn: () => cmdStats() },
     achievements: { aliases: ["a"], fn: () => cmdAchievements() },
 
     // Social
@@ -52,6 +53,7 @@ const registry: Record<string, CommandDefinition> = {
     github: {
         aliases: ["git", "source"], fn: () => {
             window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
+            unlockAchievement("developer");
         }
     },
     news: { aliases: ["changelog", "updates"], fn: () => cmdNews() },
@@ -146,6 +148,7 @@ export function handleCommand(command: string) {
 
     if (commandDef) {
         commandDef.fn({ args, fullArgs, command });
+        incrementStats(lowerCmd);
     } else {
         if (achievementCounters.lastFailedCommand === command) {
             achievementCounters.failedCommandCount++;

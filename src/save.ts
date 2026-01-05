@@ -38,5 +38,6 @@ export function resetGame() {
     $store.mails.set([]);
     $store.storyProgress.set(0);
     links.forEach(link => link.displayed = false);
+    localStorage.removeItem("stats");
     print("Game progress has been reset.", "system");
 }

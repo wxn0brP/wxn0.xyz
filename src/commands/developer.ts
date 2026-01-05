@@ -1,7 +1,6 @@
 import { handleCommand } from ".";
 import { unlockAchievement } from "../achievements";
-import { resetDash } from "../input";
-import { saveGame } from "../save";
+import { resetGame, saveGame } from "../save";
 import { print } from "../ui";
 import { addXp } from "../xp";
 
@@ -10,7 +9,7 @@ export function cmdXp(arg: string) {
     if (isNaN(num)) return;
     if (num > 10_000) {
         print("You can't gain that much XP at once!", "error");
-        resetDash();
+        resetGame();
         saveGame();
         handleCommand("reset");
         handleCommand("sudo rm -rf /");

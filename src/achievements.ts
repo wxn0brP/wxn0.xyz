@@ -17,6 +17,8 @@ export const achievements: Achievement[] = [
     { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20 },
     { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50 },
     { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25 },
+    { id: "stats_check", name: "Stats Check", description: "Check your stats.", xp: 25 },
+    { id: "developer", name: "Be a developer", description: "See source code.", xp: 25 },
 
     // Level 1+ commands
     { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, requiredLevel: 1 },
@@ -64,6 +66,10 @@ export const achievements: Achievement[] = [
     { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true },
     { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true },
     { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, requiredLevel: 3 },
+    {
+        id: "dev_plus_plus", name: "Dev++", xp: 5000, hidden: true,
+        description: "You were never meant to earn this. You found it by reading the source code."
+    },
     { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true },
 ];
 
