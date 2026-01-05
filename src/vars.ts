@@ -15,6 +15,7 @@ export const $store = createStore({
     xpMultiplier: 1,
     mails: [] as Mail[],
     storyProgress: 0,
+    busy: false,
 });
 
 export interface Mail {

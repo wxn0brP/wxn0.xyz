@@ -18,6 +18,7 @@ interface Wall {
 }
 
 export function startSnake() {
+    $store.busy.set(true);
     const originalOutputDisplay = output.style.display;
     const inputLine = qs("#input-line")!;
     const originalInputLineDisplay = inputLine.style.display;
@@ -39,6 +40,7 @@ export function startSnake() {
     if (!ctx) {
         alert("Canvas not supported!");
         cleanup();
+        $store.busy.set(false);
         return;
     }
 
@@ -281,6 +283,7 @@ export function startSnake() {
         output.style.display = originalOutputDisplay;
         inputLine.style.display = originalInputLineDisplay;
         input.focus();
+        $store.busy.set(false);
     }
 
     gameLoopId = window.setInterval(update, 100);

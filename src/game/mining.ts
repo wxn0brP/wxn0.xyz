@@ -7,6 +7,7 @@ import { achievementCounters, unlockAchievement } from "../achievements";
 
 export async function startMining() {
     input.disabled = true;
+    $store.busy.set(true);
 
     print("Initiating crypto-mining sequence...", "system");
     await delay(1000);
@@ -34,4 +35,5 @@ export async function startMining() {
 
     input.disabled = false;
     input.focus();
+    $store.busy.set(false);
 }

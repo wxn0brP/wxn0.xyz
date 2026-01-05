@@ -1,6 +1,7 @@
 import { rand } from "@wxn0brp/flanker-ui/utils";
 import { startMatrixEffect, stopMatrixEffect } from "./matrix";
 import { print, terminal } from "./ui";
+import { $store } from "./vars";
 
 setInterval(() => {
     if (Math.random() > 0.2) return;
@@ -25,6 +26,7 @@ function resetIdleTimer() {
 
     clearTimeout(idleTimeout);
     idleTimeout = setTimeout(() => {
+        if ($store.busy.get()) return;
         print("User idle. Engaging Matrix simulation...", "warning");
         isIdle = true;
         startMatrixEffect(0);
