@@ -1796,14 +1796,13 @@ async function cmdNews() {
     for (const commit of commits) {
       const message = commit.commit.message.split(`
 `)[0];
-      if (message.startsWith("feat: v") && /\d+\.\d+\.\d+/.test(message)) {
-        versionCount++;
-        if (versionCount >= 2) {
-          break;
-        }
-      }
       print(`<span style="color: #aaa">[${commit.commit.author.date.substring(0, 10)}]</span> <span style="color: #fff">${message}</span>`);
       count++;
+      if (message.startsWith("feat: v") && /\d+\.\d+\.\d+/.test(message)) {
+        versionCount++;
+        if (versionCount >= 2)
+          break;
+      }
     }
     if (count === 0) {
       print("No recent news found.", "warning");
