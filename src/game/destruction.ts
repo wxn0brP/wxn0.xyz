@@ -1,6 +1,8 @@
 import { delay } from "@wxn0brp/flanker-ui/utils";
 import { reloadWithParams } from "../start";
 import { input, print } from "../ui";
+import { $store } from "../vars";
+import { saveGame } from "../save";
 
 export async function systemDestroy() {
     input.disabled = true;
@@ -55,8 +57,9 @@ export async function systemDestroy() {
     await delay(1000);
     statusEl.textContent = "100% complete - Restarting...";
     await delay(1000);
+    $store.level.set(0);
+    saveGame();
     reloadWithParams([
-        "reset",
         "echo 'System was corrupted. Save data destroyed. Starting from a clean state.'",
     ]);
 }

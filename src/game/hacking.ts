@@ -2,6 +2,7 @@ import { delay } from "@wxn0brp/flanker-ui/utils";
 import { print } from "../ui";
 import { hackingMission, targets, vulnerabilities } from "../vars";
 import { addXp } from "../xp";
+import { achievementCounters, unlockAchievement } from "../achievements";
 
 function failHack() {
     print("Hack failed. Connection lost.", "error");
@@ -21,6 +22,10 @@ export function tryHack(input: string) {
         const xpGained = Math.floor(Math.random() * 30) + 20;
         print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
         addXp(xpGained);
+
+        achievementCounters.hackCount++;
+        if (achievementCounters.hackCount >= 10) unlockAchievement("hacker_pro");
+        if (achievementCounters.hackCount >= 50) unlockAchievement("elite_hacker");
     } else {
         print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
         failHack();

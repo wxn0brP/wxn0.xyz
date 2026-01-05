@@ -1,4 +1,5 @@
 import { input, output } from "../ui";
+import { unlockAchievement } from "../achievements";
 
 let vimActive = false;
 
@@ -66,6 +67,7 @@ export function openVim() {
         window.removeEventListener("keydown", handleKey);
         vimActive = false;
         input.focus();
+        unlockAchievement("vim_survivor");
     };
 
     const handleKey = (e: KeyboardEvent) => {
@@ -90,4 +92,5 @@ export function openVim() {
     };
 
     window.addEventListener("keydown", handleKey);
+    unlockAchievement("vim_brave");
 }

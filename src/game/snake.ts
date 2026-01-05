@@ -2,6 +2,7 @@ import { rand } from "@wxn0brp/flanker-ui/utils";
 import { input, output, print } from "../ui";
 import { $store } from "../vars";
 import { addXp } from "../xp";
+import { unlockAchievement } from "../achievements";
 
 interface Point {
     x: number;
@@ -264,6 +265,9 @@ export function startSnake() {
         window.addEventListener("keydown", closeHandler);
 
         print("Snake Game Over! Gained " + score * 2 + " xp!");
+        if (score >= 20) {
+            unlockAchievement("snake_master");
+        }
     }
 
     function cleanup() {

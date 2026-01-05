@@ -10,6 +10,7 @@ export const links = [
 export const $store = createStore({
     xp: 0,
     level: 0,
+    achievements: [] as string[],
 });
 
 export const xpToNextLevel = 100;

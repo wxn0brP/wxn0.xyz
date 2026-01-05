@@ -1,5 +1,6 @@
 import { input, output, print } from "../ui";
 import { addXp } from "../xp";
+import { unlockAchievement } from "../achievements";
 
 export function startPong() {
     const originalOutputDisplay = output.style.display;
@@ -181,6 +182,9 @@ export function startPong() {
         print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
         const xp = playerScore * 5 - aiScore;
         addXp(xp);
+        if (playerScore >= 10) {
+            unlockAchievement("pong_winner");
+        }
     }
 
     gameLoopId = requestAnimationFrame(loop);

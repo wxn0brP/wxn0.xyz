@@ -2,6 +2,7 @@ import { delay } from "@wxn0brp/flanker-ui/utils";
 import { input, print } from "../ui";
 import { hackingMission } from "../vars";
 import { addXp } from "../xp";
+import { achievementCounters, unlockAchievement } from "../achievements";
 
 let isBusy = false;
 
@@ -26,6 +27,10 @@ export async function startMining() {
         print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
         print(`Reward: <span class="success">${xpGained}</span> XP`);
         addXp(xpGained);
+
+        achievementCounters.mineCount++;
+        unlockAchievement("miner");
+        if (achievementCounters.mineCount >= 20) unlockAchievement("mining_tycoon");
     } else {
         print("Mining failed. Invalid share.", "error");
     }
