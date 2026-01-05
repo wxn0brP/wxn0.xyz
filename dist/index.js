@@ -696,7 +696,7 @@ function cmdHelp() {
   printAvailable("source", "Source code");
   if (userLevel < 1)
     return;
-  printAvailable("achievements/a", "Show your achievements");
+  printAvailable("a (achievements)", "Show your achievements");
   printAvailable("mine", "Mine for XP (Process intensive)");
   printAvailable("date", "Show current system time");
   printAvailable("whoami", "Display current user");
