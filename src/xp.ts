@@ -6,7 +6,10 @@ import { print } from "./ui";
 import { checkLevelAchievements } from "./achievements";
 
 export function addXp(xp: number) {
-    incrementCell($store.xp, xp);
+    const multiplier = $store.xpMultiplier.get();
+    const totalXp = Math.floor(xp * multiplier);
+
+    incrementCell($store.xp, totalXp);
 
     while (true) {
         const currentLevel = $store.level.get();

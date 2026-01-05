@@ -1,6 +1,7 @@
+import { incrementCell } from "@wxn0brp/flanker-ui/storeUtils";
 import { delay } from "@wxn0brp/flanker-ui/utils";
 import { print } from "../ui";
-import { hackingMission, targets, vulnerabilities } from "../vars";
+import { hackingMission, targets, vulnerabilities, $store } from "../vars";
 import { addXp } from "../xp";
 import { achievementCounters, unlockAchievement } from "../achievements";
 
@@ -20,7 +21,10 @@ export function tryHack(input: string) {
 
     if (input.toLowerCase() === hackingMission.command) {
         const xpGained = Math.floor(Math.random() * 30) + 20;
-        print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
+        const creditsGained = Math.floor(Math.random() * 30) + 20; // 20-50 Credits
+
+        print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP, <span class="warning">${creditsGained}</span> Credits.`);
+        incrementCell($store.credits, creditsGained);
         addXp(xpGained);
 
         unlockAchievement("hacker");

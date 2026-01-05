@@ -4,6 +4,8 @@ import { print } from "../ui";
 export function showStatus() {
     print(`Level: <span class="success">${$store.level.get()}</span>`);
     print(`XP: <span class="success">${$store.xp.get()}/${getXpToNextLevel($store.level.get())}</span>`);
+    print(`Credits: <span class="warning">${$store.credits.get()}</span>`);
+    print(`XP Multiplier: <span class="dim">${$store.xpMultiplier.get()}x</span>`);
 }
 
 export function showLinks() {

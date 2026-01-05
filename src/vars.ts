@@ -11,6 +11,8 @@ export const $store = createStore({
     xp: 0,
     level: 0,
     achievements: [] as string[],
+    credits: 0,
+    xpMultiplier: 1,
 });
 
 export function getXpToNextLevel(level: number) {

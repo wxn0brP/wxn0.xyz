@@ -1,6 +1,7 @@
+import { incrementCell } from "@wxn0brp/flanker-ui/storeUtils";
 import { delay } from "@wxn0brp/flanker-ui/utils";
 import { input, print } from "../ui";
-import { hackingMission } from "../vars";
+import { hackingMission, $store } from "../vars";
 import { addXp } from "../xp";
 import { achievementCounters, unlockAchievement } from "../achievements";
 
@@ -24,8 +25,11 @@ export async function startMining() {
     const success = Math.random() > 0.3; // 70% chance of success
     if (success) {
         const xpGained = Math.floor(Math.random() * 15) + 5; // 5-20 XP
+        const creditsGained = Math.floor(Math.random() * 8) + 2; // 2-10 Credits
+
         print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
-        print(`Reward: <span class="success">${xpGained}</span> XP`);
+        print(`Reward: <span class="success">${xpGained}</span> XP, <span class="warning">${creditsGained}</span> Credits`);
+        incrementCell($store.credits, creditsGained);
         addXp(xpGained);
 
         achievementCounters.mineCount++;

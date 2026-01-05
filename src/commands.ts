@@ -1,3 +1,4 @@
+import { achievementCounters, getAchievementProgress, getVisibleAchievements, unlockAchievement } from "./achievements";
 import { fileSystem } from "./filesystem";
 import {
     openVim,
@@ -5,18 +6,18 @@ import {
     showStatus,
     startHack,
     startMining,
+    startShop,
     systemDestroy,
     tryHack,
     welcome
 } from "./game";
 import { cat } from "./game/cat";
-import { startSnake } from "./game/snake";
 import { startPong } from "./game/pong";
+import { startSnake } from "./game/snake";
 import { resetGame } from "./save";
 import { clear, print, printCommand } from "./ui";
 import { $store, hackingMission } from "./vars";
 import { addXp } from "./xp";
-import { achievements, unlockAchievement, getAchievementProgress, achievementCounters, getVisibleAchievements } from "./achievements";
 
 const box = qs(".prompt");
 
@@ -59,6 +60,7 @@ export const commandsList = [
     "source",
     "achievements",
     "a",
+    "shop",
 ]
 
 export function handleCommand(command: string) {
@@ -120,10 +122,15 @@ export function handleCommand(command: string) {
             if (userLevel < 5) break;
 
             // Level 5
+            printAvailable("shop", "Open the Dark Market (Buy upgrades)");
             printAvailable("reset", "Reset your game progress");
             printAvailable("coinflip", "Flip a coin");
             printAvailable("matrix", "Enter the Matrix");
 
+            break;
+        case "shop":
+        case "store":
+            startShop(fullArgs);
             break;
         case "status":
             showStatus();
