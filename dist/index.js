@@ -426,7 +426,8 @@ var links = [
 ];
 var $store = createStore({
   xp: 0,
-  level: 0
+  level: 0,
+  achievements: []
 });
 var xpToNextLevel = 100;
 var targets = [
@@ -454,7 +455,8 @@ var hackingMission = {
 function saveGame() {
   const gameState = {
     xp: $store.xp.get(),
-    level: $store.level.get()
+    level: $store.level.get(),
+    achievements: $store.achievements.get()
   };
   localStorage.setItem("gameState", JSON.stringify(gameState));
 }
@@ -464,13 +466,18 @@ function loadGame() {
     const gameState = JSON.parse(savedState);
     $store.xp.set(gameState.xp);
     $store.level.set(gameState.level);
+    if (gameState.achievements) {
+      $store.achievements.set(gameState.achievements);
+    }
     links.forEach((link) => link.displayed = link.level <= gameState.level);
   }
 }
 function resetGame() {
   localStorage.removeItem("gameState");
   $store.level.set(0);
+  $store.level.set(0);
   $store.xp.set(0);
+  $store.achievements.set([]);
   links.forEach((link) => link.displayed = false);
   print("Game progress has been reset.", "system");
 }
@@ -489,15 +496,124 @@ function checkUnlocks() {
   });
   saveGame();
 }
+// src/achievements.ts
+var achievements = [
+  { id: "first_steps", name: "First Steps", description: "Run your first command.", xp: 10, order: 1 },
+  { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20, order: 2 },
+  { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50, order: 3 },
+  { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25, order: 4 },
+  { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, order: 5, requiredLevel: 1 },
+  { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, order: 6, requiredLevel: 1 },
+  { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, order: 7, requiredLevel: 1 },
+  { id: "explorer", name: "Explorer", description: "List directory contents.", xp: 20, order: 8, requiredLevel: 2 },
+  { id: "navigator", name: "Navigator", description: "Change directory 5 times.", xp: 25, order: 9, requiredLevel: 2 },
+  { id: "reader", name: "Reader", description: "Read a file with cat.", xp: 20, order: 10, requiredLevel: 2 },
+  { id: "snake_player", name: "Snake Charmer", description: "Play Snake.", xp: 30, order: 11, requiredLevel: 3 },
+  { id: "snake_master", name: "Snake Master", description: "Score 20+ in Snake.", xp: 100, order: 12, requiredLevel: 3 },
+  { id: "vim_brave", name: "Brave Soul", description: "Enter vim (congratulations on your courage or your stupidity).", xp: 25, order: 13, requiredLevel: 3 },
+  { id: "vim_survivor", name: "Vim Survivor", description: "Exit vim (congratulations on your persistence).", xp: 50, order: 14, requiredLevel: 3 },
+  { id: "pong_player", name: "Pong Rookie", description: "Play Pong.", xp: 30, order: 15, requiredLevel: 4 },
+  { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, order: 16, requiredLevel: 4 },
+  { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, order: 17, requiredLevel: 5 },
+  { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, order: 18, requiredLevel: 5 },
+  { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100, order: 19 },
+  { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250, order: 20 },
+  { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, order: 21, requiredLevel: 1 },
+  { id: "level_5", name: "Rising Star", description: "Reach level 5.", xp: 50, order: 22 },
+  { id: "level_10", name: "Veteran", description: "Reach level 10.", xp: 100, order: 23 },
+  { id: "level_20", name: "Master", description: "Reach level 20.", xp: 200, order: 24 },
+  { id: "hello_world", name: "Friendly", description: "Say hello to the system.", xp: 15, hidden: true, order: 100 },
+  { id: "curious", name: "Polite Hacker", description: "Ask nicely for a sandwich.", xp: 30, hidden: true, order: 102 },
+  { id: "god_mode", name: "God Mode", description: "Unlock unlimited power.", xp: 100, hidden: true, order: 103 },
+  { id: "escape_artist", name: "Escape Artist", description: "Try to exit 5 times.", xp: 40, hidden: true, order: 104 },
+  { id: "destructor", name: "Destructor", description: "Try to delete system files.", xp: 50, hidden: true, order: 105 },
+  { id: "echo_chamber", name: "Echo Chamber", description: "Use echo 10 times.", xp: 30, hidden: true, order: 106, requiredLevel: 1 },
+  { id: "persistent", name: "Persistent", description: "Try the same failed command 3 times in a row.", xp: 25, hidden: true, order: 107 },
+  { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true, order: 108 },
+  { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true, order: 112 },
+  { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, order: 113, requiredLevel: 3 },
+  { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true, order: 200 }
+];
+var achievementCounters = {
+  cdCount: 0,
+  hackCount: 0,
+  mineCount: 0,
+  exitCount: 0,
+  echoCount: 0,
+  clearCount: 0,
+  coinflipCount: 0,
+  lastFailedCommand: "",
+  failedCommandCount: 0
+};
+function unlockAchievement(id) {
+  const unlocked = $store.achievements.get();
+  if (unlocked.includes(id))
+    return;
+  const achievement = achievements.find((a) => a.id === id);
+  if (!achievement)
+    return;
+  $store.achievements.set([...unlocked, id]);
+  addXp(achievement.xp);
+  print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
+  print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
+  checkCompletionist();
+}
+function checkCompletionist() {
+  const unlocked = $store.achievements.get();
+  const nonHidden = achievements.filter((a) => !a.hidden);
+  const allNonHiddenUnlocked = nonHidden.every((a) => unlocked.includes(a.id));
+  if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
+    unlockAchievement("completionist");
+  }
+}
+function checkLevelAchievements(level) {
+  if (level >= 5)
+    unlockAchievement("level_5");
+  if (level >= 10)
+    unlockAchievement("level_10");
+  if (level >= 20)
+    unlockAchievement("level_20");
+}
+function getAchievementProgress() {
+  const unlocked = $store.achievements.get();
+  const total = achievements.length;
+  return `${unlocked.length}/${total}`;
+}
+function getVisibleAchievements() {
+  const unlocked = $store.achievements.get();
+  const currentLevel = $store.level.get();
+  const sorted = [...achievements].sort((a, b) => a.order - b.order);
+  const visible = [];
+  let nextCount = 0;
+  for (const achievement of sorted) {
+    const isUnlocked = unlocked.includes(achievement.id);
+    const levelLocked = achievement.requiredLevel !== undefined && currentLevel < achievement.requiredLevel;
+    if (isUnlocked) {
+      visible.push({ ...achievement, unlocked: true });
+    } else if (achievement.hidden) {
+      continue;
+    } else if (levelLocked) {
+      continue;
+      continue;
+    } else if (nextCount < 5) {
+      visible.push({ ...achievement, unlocked: false });
+      nextCount++;
+    }
+  }
+  return visible;
+}
+
 // src/xp.ts
 function addXp(xp) {
   incrementCell($store.xp, xp);
   if ($store.xp.get() >= xpToNextLevel) {
     incrementCell($store.level, 1);
     decrementCell($store.xp, xpToNextLevel);
-    print(`Level up! You are now level <span class="success">${$store.level.get()}</span>.`, "system");
+    const newLevel = $store.level.get();
+    print(`Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
     print(`Check 'help' for new commands!`, "system");
     checkUnlocks();
+    checkLevelAchievements(newLevel);
   }
   saveGame();
 }
@@ -517,6 +633,11 @@ function tryHack(input2) {
     const xpGained = Math.floor(Math.random() * 30) + 20;
     print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
     addXp(xpGained);
+    achievementCounters.hackCount++;
+    if (achievementCounters.hackCount >= 10)
+      unlockAchievement("hacker_pro");
+    if (achievementCounters.hackCount >= 50)
+      unlockAchievement("elite_hacker");
   } else {
     print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
     failHack();
@@ -573,6 +694,10 @@ async function startMining() {
     print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
     print(`Reward: <span class="success">${xpGained}</span> XP`);
     addXp(xpGained);
+    achievementCounters.mineCount++;
+    unlockAchievement("miner");
+    if (achievementCounters.mineCount >= 20)
+      unlockAchievement("mining_tycoon");
   } else {
     print("Mining failed. Invalid share.", "error");
   }
@@ -651,8 +776,9 @@ async function systemDestroy() {
   await delay(1000);
   statusEl.textContent = "100% complete - Restarting...";
   await delay(1000);
+  $store.level.set(0);
+  saveGame();
   reloadWithParams([
-    "reset",
     "echo 'System was corrupted. Save data destroyed. Starting from a clean state.'"
   ]);
 }
@@ -753,6 +879,7 @@ function openVim() {
     window.removeEventListener("keydown", handleKey);
     vimActive = false;
     input.focus();
+    unlockAchievement("vim_survivor");
   };
   const handleKey = (e) => {
     e.preventDefault();
@@ -771,6 +898,7 @@ function openVim() {
     }
   };
   window.addEventListener("keydown", handleKey);
+  unlockAchievement("vim_brave");
 }
 // src/game/cat.ts
 var codes = [
@@ -1055,6 +1183,9 @@ function startSnake() {
     window.removeEventListener("keydown", handleKey);
     window.addEventListener("keydown", closeHandler);
     print("Snake Game Over! Gained " + score * 2 + " xp!");
+    if (score >= 20) {
+      unlockAchievement("snake_master");
+    }
   }
   function cleanup() {
     clearInterval(gameLoopId);
@@ -1218,6 +1349,9 @@ function startPong() {
     print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
     const xp = playerScore * 5 - aiScore;
     addXp(xp);
+    if (playerScore >= 10) {
+      unlockAchievement("pong_winner");
+    }
   }
   gameLoopId = requestAnimationFrame(loop);
 }
@@ -1259,13 +1393,16 @@ var commandsList = [
   "rm",
   "snake",
   "pong",
-  "source"
+  "source",
+  "achievements",
+  "a"
 ];
 function handleCommand(command) {
   if (!command.trim()) {
     return;
   }
   printCommand(command);
+  unlockAchievement("first_steps");
   if (hackingMission.active) {
     tryHack(command);
     return;
@@ -1286,31 +1423,45 @@ function handleCommand(command) {
       printAvailable("source", "Source code");
       if (userLevel < 1)
         break;
+      printAvailable("achievements/a", "Show your achievements");
       printAvailable("mine", "Mine for XP (Process intensive)");
       printAvailable("date", "Show current system time");
-      printAvailable("ls/dir", "List directory contents");
-      printAvailable("cd", "Change directory");
-      printAvailable("cat", "Read file content");
+      printAvailable("whoami", "Display current user");
+      printAvailable("echo [text]", "Print text to terminal");
       if (userLevel < 2)
+        break;
+      printAvailable("ls/dir", "List directory contents");
+      printAvailable("cd [path]", "Change directory");
+      printAvailable("cat [file]", "Read file content");
+      printAvailable("pwd", "Print working directory");
+      if (userLevel < 3)
         break;
       printAvailable("zhiva [name]", "Run Zhiva app");
       printAvailable("snake", "Play Snake (Earn XP!)");
-      if (userLevel < 3)
+      printAvailable("vim/vi", "Open vim editor");
+      if (userLevel < 4)
         break;
       printAvailable("pong", "Play Pong (Earn XP!)");
+      if (userLevel < 5)
+        break;
       printAvailable("reset", "Reset your game progress");
+      printAvailable("coinflip", "Flip a coin");
+      printAvailable("matrix", "Enter the Matrix");
       break;
     case "status":
       showStatus();
+      unlockAchievement("status_check");
       break;
     case "hack":
       startHack();
+      unlockAchievement("hacker");
       break;
     case "mine":
       startMining();
       break;
     case "links":
       showLinks();
+      unlockAchievement("link_finder");
       break;
     case "vim":
     case "vi":
@@ -1318,6 +1469,9 @@ function handleCommand(command) {
       break;
     case "clear":
       clear();
+      achievementCounters.clearCount++;
+      if (achievementCounters.clearCount >= 10)
+        unlockAchievement("clean_freak");
       break;
     case "reset":
       resetGame();
@@ -1327,10 +1481,12 @@ function handleCommand(command) {
       break;
     case "snake":
       startSnake();
+      unlockAchievement("snake_player");
       break;
     case "pong":
     case "ping":
       startPong();
+      unlockAchievement("pong_player");
       break;
     case "return":
       localStorage.setItem("notHappened", "true");
@@ -1347,6 +1503,7 @@ function handleCommand(command) {
       }
       if (fullArgs === "make me a sandwich") {
         print("Okay.", "success");
+        unlockAchievement("curious");
         break;
       }
       if (firstArg === "rm" && ["-rf", "-fr"].includes(args[1]) && args[2] === "/") {
@@ -1357,12 +1514,17 @@ function handleCommand(command) {
       break;
     case "echo":
       print(fullArgs || " ");
+      achievementCounters.echoCount++;
+      if (achievementCounters.echoCount >= 10)
+        unlockAchievement("echo_chamber");
       break;
     case "date":
       print(new Date().toString());
+      unlockAchievement("time_traveler");
       break;
     case "whoami":
       print("guest@wxn0.xyz");
+      unlockAchievement("self_aware");
       break;
     case "make":
       if (args.join(" ") === "me a sandwich") {
@@ -1373,21 +1535,30 @@ function handleCommand(command) {
       break;
     case "exit":
       print("There is no escape.", "error");
+      achievementCounters.exitCount++;
+      if (achievementCounters.exitCount >= 5)
+        unlockAchievement("escape_artist");
       break;
     case "rm":
       print("Permission denied.", "error");
+      unlockAchievement("destructor");
       break;
     case "suglite":
       print("Suglite is watching...", "system");
       break;
     case "matrix":
       print("The Matrix has you...", "success");
+      unlockAchievement("matrix_fan");
       break;
     case "coinflip":
       print(Math.random() > 0.5 ? "Heads" : "Tails", "success");
+      achievementCounters.coinflipCount++;
+      if (achievementCounters.coinflipCount >= 10)
+        unlockAchievement("coin_flipper");
       break;
     case "42":
       print("The answer to life, the universe, and everything.", "success");
+      unlockAchievement("answer_seeker");
       break;
     case "konami":
       document.body.classList.toggle("god-mode");
@@ -1395,6 +1566,7 @@ function handleCommand(command) {
       if (isGod) {
         print("GOD MODE ACTIVATED", "system");
         print("Unlimited power...", "dim");
+        unlockAchievement("god_mode");
         box.textContent = "GOD#";
         box.style.color = "#fff";
       } else {
@@ -1406,16 +1578,21 @@ function handleCommand(command) {
     case "hello":
     case "hi":
       print("Hello there!", "system");
+      unlockAchievement("hello_world");
       break;
     case "ls":
     case "ll":
       fileSystem.ls(firstArg);
+      unlockAchievement("explorer");
       break;
     case "dir":
       print("Windows sucks.", "error");
       break;
     case "cd":
       fileSystem.cd(firstArg);
+      achievementCounters.cdCount++;
+      if (achievementCounters.cdCount >= 5)
+        unlockAchievement("navigator");
       break;
     case "cat":
       if (!firstArg || !isNaN(+firstArg)) {
@@ -1423,6 +1600,7 @@ function handleCommand(command) {
         break;
       }
       fileSystem.cat(firstArg);
+      unlockAchievement("reader");
       break;
     case "pwd":
       print(fileSystem.getCWD());
@@ -1434,6 +1612,7 @@ function handleCommand(command) {
       }
       if (!firstArg.includes("/"))
         firstArg = `wxn0brP/${firstArg}`;
+      unlockAchievement("zhiva_user");
       location.href = `zhiva://start/${firstArg}`;
       break;
     case "xp":
@@ -1448,7 +1627,33 @@ function handleCommand(command) {
     case "source":
       window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
       break;
+    case "set-achievement":
+      if (firstArg) {
+        unlockAchievement(firstArg);
+      }
+      break;
+    case "a":
+    case "achievements":
+      print(`Available Achievements (${getAchievementProgress()}):`);
+      const visible = getVisibleAchievements();
+      visible.forEach((a) => {
+        if (a.unlocked) {
+          print(`[x] <span class="success">${a.name}</span> - ${a.description} (+${a.xp} XP)`, "system");
+        } else {
+          print(`[ ] ${a.name} - ${a.description} (+${a.xp} XP)`, "dim");
+        }
+      });
+      break;
     default:
+      if (achievementCounters.lastFailedCommand === command) {
+        achievementCounters.failedCommandCount++;
+        if (achievementCounters.failedCommandCount >= 3) {
+          unlockAchievement("persistent");
+        }
+      } else {
+        achievementCounters.lastFailedCommand = command;
+        achievementCounters.failedCommandCount = 1;
+      }
       print(`Command not found: <span class="error">${command}</span>`, "error");
       break;
   }
