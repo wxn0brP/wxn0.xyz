@@ -1,0 +1,11 @@
+RewriteEngine On
+
+RewriteBase /
+RedirectMatch 404 /\.git
+RedirectMatch 404 /engagement.log
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^(.+)$ $1.html [L]
