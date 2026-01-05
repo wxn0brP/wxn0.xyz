@@ -231,26 +231,6 @@ var $store = createStore({
 function getXpToNextLevel(level) {
   return 100 + level * 50;
 }
-var targets = [
-  "corporate-mainframe-j7",
-  "government-server-omega",
-  "bank-of-world-main",
-  "crypto-exchange-alpha",
-  "research-lab-gamma"
-];
-var vulnerabilities = [
-  { name: "buffer overflow", command: "exploit buffer_overflow" },
-  { name: "SQL injection", command: "exploit sql_injection" },
-  { name: "cross-site scripting", command: "exploit xss" },
-  { name: "rootkit", command: "install rootkit" },
-  { name: "zero-day", command: "deploy zero_day" }
-];
-var hackingMission = {
-  active: false,
-  target: null,
-  vulnerability: null,
-  command: null
-};
 
 // src/ui.ts
 var terminal = document.getElementById("terminal");
@@ -330,112 +310,6 @@ function checkUnlocks() {
   });
   saveGame();
 }
-// src/achievements.ts
-var achievements = [
-  { id: "first_steps", name: "First Steps", description: "Run your first command.", xp: 10, order: 1 },
-  { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20, order: 2 },
-  { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50, order: 3 },
-  { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25, order: 4 },
-  { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, order: 5, requiredLevel: 1 },
-  { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, order: 6, requiredLevel: 1 },
-  { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, order: 7, requiredLevel: 1 },
-  { id: "explorer", name: "Explorer", description: "List directory contents.", xp: 20, order: 8, requiredLevel: 2 },
-  { id: "navigator", name: "Navigator", description: "Change directory 5 times.", xp: 25, order: 9, requiredLevel: 2 },
-  { id: "reader", name: "Reader", description: "Read a file with cat.", xp: 20, order: 10, requiredLevel: 2 },
-  { id: "snake_player", name: "Snake Charmer", description: "Play Snake.", xp: 30, order: 11, requiredLevel: 3 },
-  { id: "snake_master", name: "Snake Master", description: "Score 20+ in Snake.", xp: 100, order: 12, requiredLevel: 3 },
-  { id: "vim_brave", name: "Brave Soul", description: "Enter vim (congratulations on your courage or your stupidity).", xp: 25, order: 13, requiredLevel: 3 },
-  { id: "vim_survivor", name: "Vim Survivor", description: "Exit vim (congratulations on your persistence).", xp: 50, order: 14, requiredLevel: 3 },
-  { id: "pong_player", name: "Pong Rookie", description: "Play Pong.", xp: 30, order: 15, requiredLevel: 4 },
-  { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, order: 16, requiredLevel: 4 },
-  { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, order: 17, requiredLevel: 5 },
-  { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, order: 18, requiredLevel: 5 },
-  { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100, order: 19 },
-  { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250, order: 20 },
-  { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, order: 21, requiredLevel: 1 },
-  { id: "level_5", name: "Rising Star", description: "Reach level 5.", xp: 50, order: 22 },
-  { id: "level_10", name: "Veteran", description: "Reach level 10.", xp: 100, order: 23 },
-  { id: "level_20", name: "Master", description: "Reach level 20.", xp: 200, order: 24 },
-  { id: "hello_world", name: "Friendly", description: "Say hello to the system.", xp: 15, hidden: true, order: 100 },
-  { id: "curious", name: "Polite Hacker", description: "Ask nicely for a sandwich.", xp: 30, hidden: true, order: 102 },
-  { id: "god_mode", name: "God Mode", description: "Unlock unlimited power.", xp: 100, hidden: true, order: 103 },
-  { id: "escape_artist", name: "Escape Artist", description: "Try to exit 5 times.", xp: 40, hidden: true, order: 104 },
-  { id: "destructor", name: "Destructor", description: "Try to delete system files.", xp: 50, hidden: true, order: 105 },
-  { id: "echo_chamber", name: "Echo Chamber", description: "Use echo 10 times.", xp: 30, hidden: true, order: 106, requiredLevel: 1 },
-  { id: "persistent", name: "Persistent", description: "Try the same failed command 3 times in a row.", xp: 25, hidden: true, order: 107 },
-  { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true, order: 108 },
-  { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true, order: 112 },
-  { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, order: 113, requiredLevel: 3 },
-  { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true, order: 200 }
-];
-var achievementCounters = {
-  cdCount: 0,
-  hackCount: 0,
-  mineCount: 0,
-  exitCount: 0,
-  echoCount: 0,
-  clearCount: 0,
-  coinflipCount: 0,
-  lastFailedCommand: "",
-  failedCommandCount: 0
-};
-function unlockAchievement(id) {
-  const unlocked = $store.achievements.get();
-  if (unlocked.includes(id))
-    return;
-  const achievement = achievements.find((a) => a.id === id);
-  if (!achievement)
-    return;
-  $store.achievements.set([...unlocked, id]);
-  addXp(achievement.xp);
-  print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
-  print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
-  checkCompletionist();
-}
-function checkCompletionist() {
-  const unlocked = $store.achievements.get();
-  const nonHidden = achievements.filter((a) => !a.hidden);
-  const allNonHiddenUnlocked = nonHidden.every((a) => unlocked.includes(a.id));
-  if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
-    unlockAchievement("completionist");
-  }
-}
-function checkLevelAchievements(level) {
-  if (level >= 5)
-    unlockAchievement("level_5");
-  if (level >= 10)
-    unlockAchievement("level_10");
-  if (level >= 20)
-    unlockAchievement("level_20");
-}
-function getAchievementProgress() {
-  const unlocked = $store.achievements.get();
-  const total = achievements.length;
-  return `${unlocked.length}/${total}`;
-}
-function getVisibleAchievements() {
-  const unlocked = $store.achievements.get();
-  const currentLevel = $store.level.get();
-  const sorted = [...achievements].sort((a, b) => a.order - b.order);
-  const visible = [];
-  let nextCount = 0;
-  for (const achievement of sorted) {
-    const isUnlocked = unlocked.includes(achievement.id);
-    const levelLocked = achievement.requiredLevel !== undefined && currentLevel < achievement.requiredLevel;
-    if (isUnlocked) {
-      visible.push({ ...achievement, unlocked: true });
-    } else if (achievement.hidden) {
-      continue;
-    } else if (levelLocked) {
-      continue;
-    } else if (nextCount < 5 && (achievement.requiredLevel === undefined || achievement.requiredLevel <= currentLevel)) {
-      visible.push({ ...achievement, unlocked: false });
-      nextCount++;
-    }
-  }
-  return visible;
-}
-
 // src/game/story.ts
 var cipherMails = [
   {
@@ -590,7 +464,139 @@ function addXp(xp) {
   saveGame();
 }
 
+// src/achievements.ts
+var achievements = [
+  { id: "first_steps", name: "First Steps", description: "Run your first command.", xp: 10, order: 1 },
+  { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20, order: 2 },
+  { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50, order: 3 },
+  { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25, order: 4 },
+  { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, order: 5, requiredLevel: 1 },
+  { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, order: 6, requiredLevel: 1 },
+  { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, order: 7, requiredLevel: 1 },
+  { id: "explorer", name: "Explorer", description: "List directory contents.", xp: 20, order: 8, requiredLevel: 2 },
+  { id: "navigator", name: "Navigator", description: "Change directory 5 times.", xp: 25, order: 9, requiredLevel: 2 },
+  { id: "reader", name: "Reader", description: "Read a file with cat.", xp: 20, order: 10, requiredLevel: 2 },
+  { id: "snake_player", name: "Snake Charmer", description: "Play Snake.", xp: 30, order: 11, requiredLevel: 3 },
+  { id: "snake_master", name: "Snake Master", description: "Score 20+ in Snake.", xp: 100, order: 12, requiredLevel: 3 },
+  { id: "vim_brave", name: "Brave Soul", description: "Enter vim (congratulations on your courage or your stupidity).", xp: 25, order: 13, requiredLevel: 3 },
+  { id: "vim_survivor", name: "Vim Survivor", description: "Exit vim (congratulations on your persistence).", xp: 50, order: 14, requiredLevel: 3 },
+  { id: "pong_player", name: "Pong Rookie", description: "Play Pong.", xp: 30, order: 15, requiredLevel: 4 },
+  { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, order: 16, requiredLevel: 4 },
+  { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, order: 17, requiredLevel: 5 },
+  { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, order: 18, requiredLevel: 5 },
+  { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100, order: 19 },
+  { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250, order: 20 },
+  { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, order: 21, requiredLevel: 1 },
+  { id: "level_5", name: "Rising Star", description: "Reach level 5.", xp: 50, order: 22 },
+  { id: "level_10", name: "Veteran", description: "Reach level 10.", xp: 100, order: 23 },
+  { id: "level_20", name: "Master", description: "Reach level 20.", xp: 200, order: 24 },
+  { id: "hello_world", name: "Friendly", description: "Say hello to the system.", xp: 15, hidden: true, order: 100 },
+  { id: "curious", name: "Polite Hacker", description: "Ask nicely for a sandwich.", xp: 30, hidden: true, order: 102 },
+  { id: "god_mode", name: "God Mode", description: "Unlock unlimited power.", xp: 100, hidden: true, order: 103 },
+  { id: "escape_artist", name: "Escape Artist", description: "Try to exit 5 times.", xp: 40, hidden: true, order: 104 },
+  { id: "destructor", name: "Destructor", description: "Try to delete system files.", xp: 50, hidden: true, order: 105 },
+  { id: "echo_chamber", name: "Echo Chamber", description: "Use echo 10 times.", xp: 30, hidden: true, order: 106, requiredLevel: 1 },
+  { id: "persistent", name: "Persistent", description: "Try the same failed command 3 times in a row.", xp: 25, hidden: true, order: 107 },
+  { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true, order: 108 },
+  { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true, order: 112 },
+  { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, order: 113, requiredLevel: 3 },
+  { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true, order: 200 }
+];
+var achievementCounters = {
+  cdCount: 0,
+  hackCount: 0,
+  mineCount: 0,
+  exitCount: 0,
+  echoCount: 0,
+  clearCount: 0,
+  coinflipCount: 0,
+  lastFailedCommand: "",
+  failedCommandCount: 0
+};
+function unlockAchievement(id) {
+  const unlocked = $store.achievements.get();
+  if (unlocked.includes(id))
+    return;
+  const achievement = achievements.find((a) => a.id === id);
+  if (!achievement)
+    return;
+  $store.achievements.set([...unlocked, id]);
+  addXp(achievement.xp);
+  print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
+  print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
+  checkCompletionist();
+}
+function checkCompletionist() {
+  const unlocked = $store.achievements.get();
+  const nonHidden = achievements.filter((a) => !a.hidden);
+  const allNonHiddenUnlocked = nonHidden.every((a) => unlocked.includes(a.id));
+  if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
+    unlockAchievement("completionist");
+  }
+}
+function checkLevelAchievements(level) {
+  if (level >= 5)
+    unlockAchievement("level_5");
+  if (level >= 10)
+    unlockAchievement("level_10");
+  if (level >= 20)
+    unlockAchievement("level_20");
+}
+function getAchievementProgress() {
+  const unlocked = $store.achievements.get();
+  const total = achievements.length;
+  return `${unlocked.length}/${total}`;
+}
+function getVisibleAchievements() {
+  const unlocked = $store.achievements.get();
+  const currentLevel = $store.level.get();
+  const sorted = [...achievements].sort((a, b) => a.order - b.order);
+  const visible = [];
+  let nextCount = 0;
+  for (const achievement of sorted) {
+    const isUnlocked = unlocked.includes(achievement.id);
+    const levelLocked = achievement.requiredLevel !== undefined && currentLevel < achievement.requiredLevel;
+    if (isUnlocked) {
+      visible.push({ ...achievement, unlocked: true });
+    } else if (achievement.hidden) {
+      continue;
+    } else if (levelLocked) {
+      continue;
+    } else if (nextCount < 5 && (achievement.requiredLevel === undefined || achievement.requiredLevel <= currentLevel)) {
+      visible.push({ ...achievement, unlocked: false });
+      nextCount++;
+    }
+  }
+  return visible;
+}
+
 // src/game/hacking.ts
+var targets = [
+  "corporate-mainframe-j7",
+  "government-server-omega",
+  "bank-of-world-main",
+  "crypto-exchange-alpha",
+  "research-lab-gamma"
+];
+var vulnerabilities = [
+  { name: "buffer overflow", command: "exploit buffer_overflow" },
+  { name: "SQL injection", command: "exploit sql_injection" },
+  { name: "cross-site scripting", command: "exploit xss" },
+  { name: "rootkit", command: "install rootkit" },
+  { name: "zero-day", command: "deploy zero_day" },
+  { name: "malware", command: "install malware" },
+  { name: "System32", command: "remove System32" },
+  { name: "kernel panic", command: "crash kernel" },
+  { name: "blue screen of death", command: "crash blue_screen" },
+  { name: "virus", command: "reinstall virus" },
+  { name: "worm", command: "feed worm" }
+];
+var hackingMission = {
+  active: false,
+  target: null,
+  vulnerability: null,
+  command: null
+};
 function failHack() {
   print("Hack failed. Connection lost.", "error");
   if (hackingMission.timer)
@@ -649,13 +655,7 @@ async function startHack() {
   }, 1e4);
 }
 // src/game/mining.ts
-var isBusy = false;
 async function startMining() {
-  if (isBusy || hackingMission.active) {
-    print("System is busy.", "error");
-    return;
-  }
-  isBusy = true;
   input.disabled = true;
   print("Initiating crypto-mining sequence...", "system");
   await delay(1000);
@@ -679,7 +679,6 @@ async function startMining() {
     print("Mining failed. Invalid share.", "error");
   }
   input.disabled = false;
-  isBusy = false;
   input.focus();
 }
 // src/commands/help.ts
@@ -1191,7 +1190,7 @@ function startSnake() {
   let apple = { x: 0, y: 0 };
   const walls = [];
   const terminalText = output.innerText || "VOID ERROR NULL SYSTEM FAILURE";
-  const words = terminalText.split(" ").filter((w) => w.length > 3 && w.length < 20);
+  const words = terminalText.split(" ").filter((w) => w.length > 3 && w.length < 20).sort(() => Math.random() - 0.5).slice(0, 150);
   words.forEach((word) => {
     const metrics = ctx.measureText(word);
     const w = metrics.width;
@@ -1379,17 +1378,17 @@ function startPong() {
   }
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
-  const PADDLE_WIDTH = 10;
+  const PADDLE_WIDTH = 15;
   const PADDLE_HEIGHT = 150;
   const BALL_SIZE = 10;
   const PLAYER_SPEED = 12;
-  const AI_SPEED = 8;
+  const AI_SPEED = 10;
   let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
   let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
   let ballX = canvas.width / 2;
   let ballY = canvas.height / 2;
-  let ballSpeedX = 5;
-  let ballSpeedY = 5;
+  let ballSpeedX = 10;
+  let ballSpeedY = 10;
   let playerScore = 0;
   let aiScore = 0;
   let gameLoopId;
@@ -1417,7 +1416,7 @@ function startPong() {
     ballX = canvas.width / 2;
     ballY = canvas.height / 2;
     ballSpeedX = -ballSpeedX;
-    ballSpeedY = (Math.random() - 0.5) * 10;
+    ballSpeedY = (Math.random() - 0.5) * 20;
   }
   function update() {
     if (keys.ArrowUp && playerY > 0)
@@ -1499,6 +1498,7 @@ function startPong() {
     input.focus();
     print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
     const xp = playerScore * 5 - aiScore;
+    print(`You earned ${xp} XP!`);
     addXp(xp);
     if (playerScore >= 10) {
       unlockAchievement("pong_winner");
