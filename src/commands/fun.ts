@@ -11,7 +11,7 @@ export function cmdSudo(args: string[], fullArgs: string) {
         fileSystem.cat(args[1], true);
         return;
     }
-    if (fullArgs === "make me a sandwich") {
+    if (fullArgs === "make me a sandwitch") {
         print("Okay.", "success");
         unlockAchievement("curious");
         return;

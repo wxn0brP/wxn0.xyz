@@ -97,7 +97,9 @@ export function unlockAchievement(id: string) {
 
 function checkCompletionist() {
     const unlocked = $store.achievements.get();
-    const nonHidden = achievements.filter(a => !a.hidden);
+    const nonHidden = achievements
+        .filter(a => !a.hidden)
+        .filter(a => a.id !== "completionist");
     const allNonHiddenUnlocked = nonHidden.every(a => unlocked.includes(a.id));
 
     if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
