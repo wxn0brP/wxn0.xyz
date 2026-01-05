@@ -1,4 +1,5 @@
 import { fileSystem } from "../filesystem";
+import { resetDash } from "../input";
 import { input, print } from "../ui";
 import { delay } from "@wxn0brp/flanker-ui/utils";
 
@@ -20,5 +21,5 @@ export async function welcome() {
     await delay(300);
     print("Type '<span class='success'>help</span>' to list available commands.");
     input.disabled = false;
-    qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
+    resetDash();
 }

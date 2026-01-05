@@ -2,6 +2,7 @@ import { print } from "../ui";
 import { unlockAchievement, achievementCounters } from "../achievements";
 import { fileSystem } from "../filesystem";
 import { systemDestroy } from "../game";
+import { resetDash } from "../input";
 
 export function cmdSudo(args: string[], fullArgs: string) {
     const firstArg = args[0];
@@ -55,7 +56,7 @@ export function cmd42() {
 export function cmdKonami() {
     document.body.classList.toggle("god-mode");
     const isGod = document.body.classList.contains("god-mode");
-    const box = document.querySelector(".prompt") as HTMLElement;
+    const box = qs(".prompt");
 
     if (isGod) {
         print("GOD MODE ACTIVATED", "system");
@@ -68,7 +69,7 @@ export function cmdKonami() {
     } else {
         print("God mode... disabled due to budget cuts.", "dim");
         if (box) {
-            box.textContent = ">";
+            resetDash();
             box.style.color = "";
         }
     }

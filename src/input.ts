@@ -1,7 +1,8 @@
 import { debounce } from "@wxn0brp/flanker-ui/utils";
-import { handleCommand, commandsList } from "./commands";
-import { input, clear } from "./ui";
+import { commandsList, handleCommand } from "./commands";
 import { handleAutoComplete } from "./complete";
+import { fileSystem } from "./filesystem";
+import { clear, input } from "./ui";
 
 const commandHistory: string[] = [];
 let historyIndex = -1;
@@ -104,3 +105,7 @@ window.addEventListener("keydown", (e) => {
         konamiIndex = 0;
     }
 });
+
+export function resetDash() {
+    qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
+}
