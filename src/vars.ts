@@ -13,7 +13,9 @@ export const $store = createStore({
     achievements: [] as string[],
 });
 
-export const xpToNextLevel = 100;
+export function getXpToNextLevel(level: number) {
+    return 100 + (level * 50);
+}
 
 export const targets = [
     "corporate-mainframe-j7",

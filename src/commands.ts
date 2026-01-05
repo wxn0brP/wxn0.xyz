@@ -131,7 +131,6 @@ export function handleCommand(command: string) {
             break;
         case "hack":
             startHack();
-            unlockAchievement("hacker");
             break;
         case "mine":
             startMining();

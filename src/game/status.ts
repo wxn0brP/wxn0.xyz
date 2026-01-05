@@ -1,9 +1,9 @@
-import { $store, links, xpToNextLevel } from "../vars";
+import { $store, links, getXpToNextLevel } from "../vars";
 import { print } from "../ui";
 
 export function showStatus() {
     print(`Level: <span class="success">${$store.level.get()}</span>`);
-    print(`XP: <span class="success">${$store.xp.get()}/${xpToNextLevel}</span>`);
+    print(`XP: <span class="success">${$store.xp.get()}/${getXpToNextLevel($store.level.get())}</span>`);
 }
 
 export function showLinks() {

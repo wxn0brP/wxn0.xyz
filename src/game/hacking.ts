@@ -23,6 +23,7 @@ export function tryHack(input: string) {
         print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
         addXp(xpGained);
 
+        unlockAchievement("hacker");
         achievementCounters.hackCount++;
         if (achievementCounters.hackCount >= 10) unlockAchievement("hacker_pro");
         if (achievementCounters.hackCount >= 50) unlockAchievement("elite_hacker");

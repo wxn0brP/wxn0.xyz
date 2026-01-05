@@ -136,8 +136,13 @@ export function getVisibleAchievements() {
             continue;
         } else if (levelLocked) {
             continue;
-            continue;
-        } else if (nextCount < 5) {
+        } else if (
+            nextCount < 5 &&
+            (
+                achievement.requiredLevel === undefined ||
+                achievement.requiredLevel <= currentLevel
+            )
+        ) {
             visible.push({ ...achievement, unlocked: false });
             nextCount++;
         }
