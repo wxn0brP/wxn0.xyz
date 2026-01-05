@@ -1,6 +1,7 @@
 import { cmdHelp } from "./help";
 import { cmdStatus, cmdAchievements } from "./info";
 import { cmdLinks, cmdWhoami, cmdDate, cmdGithub } from "./social";
+import { cmdNews } from "./news";
 import { cmdLs, cmdDir, cmdCd, cmdPwd, cmdCat, cmdRm } from "./filesystem";
 import { cmdSudo, cmdEcho, cmdMake, cmdMatrix, cmdCoinflip, cmd42, cmdKonami, cmdHello } from "./fun";
 import { cmdHack, cmdMine, cmdShop, cmdVim, cmdSnake, cmdPong, cmdZhiva } from "./games";
@@ -36,6 +37,7 @@ const registry: Record<string, CommandDefinition> = {
     whoami: { fn: () => cmdWhoami() },
     date: { fn: () => cmdDate() },
     github: { aliases: ["git", "source"], fn: () => cmdGithub() },
+    news: { aliases: ["changelog", "updates"], fn: () => cmdNews() },
     hello: { aliases: ["hi"], fn: () => cmdHello() },
 
     // Filesystem
