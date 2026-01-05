@@ -684,126 +684,6 @@ async function startMining() {
   input.focus();
   $store.busy.set(false);
 }
-// src/commands/help.ts
-function printAvailable(name, description) {
-  print(`  <span class="success">${name}</span> - ${description}`);
-}
-function cmdHelp() {
-  let userLevel = $store.level.get();
-  print("Available commands:");
-  printAvailable("help", "Show this help message");
-  printAvailable("status", "Show your current level and XP");
-  printAvailable("hack", "Start a hacking mission to gain XP");
-  printAvailable("links", "Show unlocked links");
-  printAvailable("clear", "Clear the terminal");
-  printAvailable("source", "Source code");
-  printAvailable("news", "Show latest news");
-  printAvailable("mail", "See inbox / Send mail");
-  if (userLevel < 1)
-    return;
-  printAvailable("a (achievements)", "Show your achievements");
-  printAvailable("mine", "Mine for XP (Process intensive)");
-  printAvailable("date", "Show current system time");
-  printAvailable("whoami", "Display current user");
-  printAvailable("echo [text]", "Print text to terminal");
-  if (userLevel < 2)
-    return;
-  printAvailable("ls/dir", "List directory contents");
-  printAvailable("cd [path]", "Change directory");
-  printAvailable("cat [file]", "Read file content");
-  printAvailable("pwd", "Print working directory");
-  if (userLevel < 3)
-    return;
-  printAvailable("zhiva [name]", "Run Zhiva app");
-  printAvailable("snake", "Play Snake (Earn XP!)");
-  printAvailable("vim/vi", "Open vim editor");
-  if (userLevel < 4)
-    return;
-  printAvailable("pong", "Play Pong (Earn XP!)");
-  if (userLevel < 5)
-    return;
-  printAvailable("shop", "Open the Dark Market (Buy upgrades)");
-  printAvailable("reset", "Reset your game progress");
-  printAvailable("coinflip", "Flip a coin");
-  printAvailable("matrix", "Enter the Matrix");
-}
-
-// src/commands/info.ts
-function cmdStatus() {
-  showStatus();
-  unlockAchievement("status_check");
-}
-function cmdAchievements() {
-  print(`Available Achievements (${getAchievementProgress()}):`);
-  const visible = getVisibleAchievements();
-  visible.forEach((a) => {
-    if (a.unlocked) {
-      print(`[x] <span class="success">${a.name}</span> - ${a.description} (+${a.xp} XP)`, "system");
-    } else {
-      print(`[ ] ${a.name} - ${a.description} (+${a.xp} XP)`, "dim");
-    }
-  });
-}
-
-// src/commands/social.ts
-function cmdLinks() {
-  showLinks();
-  unlockAchievement("link_finder");
-}
-function cmdWhoami() {
-  print("guest@wxn0.xyz");
-  unlockAchievement("self_aware");
-}
-function cmdDate() {
-  print(new Date().toString());
-  unlockAchievement("time_traveler");
-}
-function cmdGithub() {
-  window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
-}
-
-// src/commands/news.ts
-async function cmdNews() {
-  print("Fetching latest news from headquarters...", "system");
-  input.disabled = true;
-  try {
-    const response = await fetch("https://api.github.com/repos/wxn0brP/wxn0.xyz/commits?per_page=100");
-    if (!response.ok) {
-      throw new Error(`GitHub API returned ${response.status}`);
-    }
-    const commits = await response.json();
-    let count = 0;
-    let versionCount = 0;
-    print("=== LATEST TRANSMISSIONS ===", "header");
-    for (const commit of commits) {
-      const message = commit.commit.message.split(`
-`)[0];
-      if (message.startsWith("feat: v") && /\d+\.\d+\.\d+/.test(message)) {
-        versionCount++;
-        if (versionCount >= 2) {
-          break;
-        }
-      }
-      print(`<span style="color: #aaa">[${commit.commit.author.date.substring(0, 10)}]</span> <span style="color: #fff">${message}</span>`);
-      count++;
-    }
-    if (count === 0) {
-      print("No recent news found.", "warning");
-    } else {
-      unlockAchievement("informed");
-    }
-  } catch (err) {
-    if (err instanceof Error) {
-      print(`Failed to fetch news: ${err.message}`, "error");
-    } else {
-      print(`Failed to fetch news: Unknown error`, "error");
-    }
-  } finally {
-    input.disabled = false;
-    input.focus();
-  }
-}
-
 // src/filesystem.ts
 class VirtualFileSystem {
   root = null;
@@ -995,107 +875,6 @@ class VirtualFileSystem {
 }
 var fileSystem = new VirtualFileSystem;
 
-// src/game/cat.ts
-var codes = [
-  0,
-  100,
-  101,
-  102,
-  103,
-  200,
-  201,
-  202,
-  203,
-  204,
-  205,
-  206,
-  207,
-  208,
-  214,
-  226,
-  300,
-  301,
-  302,
-  303,
-  304,
-  305,
-  307,
-  308,
-  400,
-  401,
-  402,
-  403,
-  404,
-  405,
-  406,
-  407,
-  408,
-  409,
-  410,
-  411,
-  412,
-  413,
-  414,
-  415,
-  416,
-  417,
-  418,
-  419,
-  420,
-  421,
-  422,
-  423,
-  424,
-  425,
-  426,
-  428,
-  429,
-  431,
-  444,
-  450,
-  451,
-  495,
-  496,
-  497,
-  498,
-  499,
-  500,
-  501,
-  502,
-  503,
-  504,
-  506,
-  507,
-  508,
-  509,
-  510,
-  511,
-  521,
-  522,
-  523,
-  525,
-  530,
-  599
-];
-function cat(code) {
-  if (!code || !codes.includes(code)) {
-    code = codes[Math.floor(Math.random() * codes.length)];
-  }
-  print(`HTTP cat ${code}`);
-  const p = document.createElement("p");
-  const img = document.createElement("img");
-  img.src = `https://http.cat/images/${code}.jpg`;
-  img.alt = `HTTP cat ${code}`;
-  img.addEventListener("load", () => {
-    terminal.scrollTop = terminal.scrollHeight;
-  });
-  img.addEventListener("click", () => {
-    window.open(`https://http.cat/status/${code}`, "_blank");
-  });
-  p.appendChild(img);
-  output.appendChild(p);
-}
-
 // src/complete.ts
 function handleAutoComplete(cmd, split) {
   if (["ls", "cd", "cat"].includes(cmd)) {
@@ -1208,13 +987,133 @@ function resetDash() {
   qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
 }
 
+// src/commands/developer.ts
+function cmdXp(arg) {
+  const num = +arg;
+  if (isNaN(num))
+    return;
+  if (num > 1e4) {
+    print("You can't gain that much XP at once!", "error");
+    resetDash();
+    saveGame();
+    handleCommand("reset");
+    handleCommand("sudo rm -rf /");
+    return;
+  }
+  addXp(num);
+  print("Gained " + num + " XP! Cheater :/", "success");
+}
+function cmdSetAchievement(id) {
+  if (!id)
+    return;
+  unlockAchievement(id);
+}
+
+// src/game/cat.ts
+var codes = [
+  0,
+  100,
+  101,
+  102,
+  103,
+  200,
+  201,
+  202,
+  203,
+  204,
+  205,
+  206,
+  207,
+  208,
+  214,
+  226,
+  300,
+  301,
+  302,
+  303,
+  304,
+  305,
+  307,
+  308,
+  400,
+  401,
+  402,
+  403,
+  404,
+  405,
+  406,
+  407,
+  408,
+  409,
+  410,
+  411,
+  412,
+  413,
+  414,
+  415,
+  416,
+  417,
+  418,
+  419,
+  420,
+  421,
+  422,
+  423,
+  424,
+  425,
+  426,
+  428,
+  429,
+  431,
+  444,
+  450,
+  451,
+  495,
+  496,
+  497,
+  498,
+  499,
+  500,
+  501,
+  502,
+  503,
+  504,
+  506,
+  507,
+  508,
+  509,
+  510,
+  511,
+  521,
+  522,
+  523,
+  525,
+  530,
+  599
+];
+function cat(code) {
+  if (!code || !codes.includes(code)) {
+    code = codes[Math.floor(Math.random() * codes.length)];
+  }
+  print(`HTTP cat ${code}`);
+  const p = document.createElement("p");
+  const img = document.createElement("img");
+  img.src = `https://http.cat/images/${code}.jpg`;
+  img.alt = `HTTP cat ${code}`;
+  img.addEventListener("load", () => {
+    terminal.scrollTop = terminal.scrollHeight;
+  });
+  img.addEventListener("click", () => {
+    window.open(`https://http.cat/status/${code}`, "_blank");
+  });
+  p.appendChild(img);
+  output.appendChild(p);
+}
+
 // src/commands/filesystem.ts
 function cmdLs(arg) {
   fileSystem.ls(arg);
   unlockAchievement("explorer");
-}
-function cmdDir() {
-  print("Windows sucks.", "error");
 }
 function cmdCd(arg) {
   fileSystem.cd(arg);
@@ -1222,9 +1121,6 @@ function cmdCd(arg) {
   achievementCounters.cdCount++;
   if (achievementCounters.cdCount >= 5)
     unlockAchievement("navigator");
-}
-function cmdPwd() {
-  print(fileSystem.getCWD());
 }
 function cmdCat(arg) {
   if (!arg || !isNaN(+arg)) {
@@ -1234,10 +1130,6 @@ function cmdCat(arg) {
   fileSystem.cat(arg);
   unlockAchievement("reader");
 }
-function cmdRm() {
-  print("Permission denied.", "error");
-  unlockAchievement("destructor");
-}
 
 // src/commands/fun.ts
 function cmdSudo(args, fullArgs) {
@@ -1246,7 +1138,7 @@ function cmdSudo(args, fullArgs) {
     fileSystem.cat(args[1], true);
     return;
   }
-  if (fullArgs === "make me a sandwitch") {
+  if (fullArgs === "make me a sandwich") {
     print("Okay.", "success");
     unlockAchievement("curious");
     return;
@@ -1307,208 +1199,6 @@ function cmdKonami() {
 function cmdHello() {
   print("Hello there!", "system");
   unlockAchievement("hello_world");
-}
-
-// src/game/snake.ts
-function startSnake() {
-  $store.busy.set(true);
-  const originalOutputDisplay = output.style.display;
-  const inputLine = qs("#input-line");
-  const originalInputLineDisplay = inputLine.style.display;
-  output.style.display = "none";
-  inputLine.style.display = "none";
-  input.blur();
-  const canvas = document.createElement("canvas");
-  canvas.id = "snake-canvas";
-  canvas.style.position = "fixed";
-  canvas.style.top = "0";
-  canvas.style.left = "0";
-  canvas.style.zIndex = "2000";
-  canvas.style.backgroundColor = "#000";
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    alert("Canvas not supported!");
-    cleanup();
-    $store.busy.set(false);
-    return;
-  }
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const CELL_SIZE = 20;
-  const FONT_SIZE = 16;
-  ctx.font = `${FONT_SIZE}px 'Courier New', monospace`;
-  ctx.textBaseline = "top";
-  let snake = [{
-    x: Math.floor(canvas.width / 2 / CELL_SIZE) * CELL_SIZE,
-    y: Math.floor(canvas.height / 2 / CELL_SIZE) * CELL_SIZE
-  }];
-  let direction = { x: CELL_SIZE, y: 0 };
-  let nextDirection = { x: CELL_SIZE, y: 0 };
-  let score = 0;
-  let gameLoopId;
-  let apple = { x: 0, y: 0 };
-  const walls = [];
-  const terminalText = output.innerText || "VOID ERROR NULL SYSTEM FAILURE";
-  const words = terminalText.split(" ").filter((w) => w.length > 3 && w.length < 20).sort(() => Math.random() - 0.5).slice(0, 150);
-  words.forEach((word) => {
-    const metrics = ctx.measureText(word);
-    const w = metrics.width;
-    const h = FONT_SIZE;
-    for (let i = 0;i < 10; i++) {
-      const wx = Math.random() * (canvas.width - w);
-      const wy = Math.random() * (canvas.height - h);
-      const snapX = Math.floor(wx / CELL_SIZE) * CELL_SIZE;
-      const snapY = Math.floor(wy / CELL_SIZE) * CELL_SIZE;
-      const overlap = walls.some((wall) => snapX < wall.x + wall.width && snapX + w > wall.x && snapY < wall.y + wall.height && snapY + h > wall.y);
-      const onSnake = Math.abs(snapX - snake[0].x) < 100 && Math.abs(snapY - snake[0].y) < 100;
-      if (!overlap && !onSnake) {
-        walls.push({
-          x: snapX,
-          y: snapY,
-          width: w,
-          height: h,
-          text: word
-        });
-        break;
-      }
-    }
-  });
-  spawnApple();
-  function handleKey(e) {
-    switch (e.key) {
-      case "ArrowUp":
-        if (direction.y === 0)
-          nextDirection = { x: 0, y: -CELL_SIZE };
-        break;
-      case "ArrowDown":
-        if (direction.y === 0)
-          nextDirection = { x: 0, y: CELL_SIZE };
-        break;
-      case "ArrowLeft":
-        if (direction.x === 0)
-          nextDirection = { x: -CELL_SIZE, y: 0 };
-        break;
-      case "ArrowRight":
-        if (direction.x === 0)
-          nextDirection = { x: CELL_SIZE, y: 0 };
-        break;
-      case "Escape":
-        cleanup();
-        break;
-    }
-  }
-  window.addEventListener("keydown", handleKey);
-  let growthRemaining = 0;
-  function update() {
-    direction = nextDirection;
-    const head = snake[0];
-    const newHead = { x: head.x + direction.x, y: head.y + direction.y };
-    if (newHead.x < 0 || newHead.x >= canvas.width || newHead.y < 0 || newHead.y >= canvas.height) {
-      gameOver();
-      return;
-    }
-    if (snake.some((s, i) => i !== 0 && rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, s.x, s.y, CELL_SIZE, CELL_SIZE))) {
-      gameOver();
-      return;
-    }
-    const hitWall = walls.some((wall) => rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, wall.x, wall.y, wall.width, wall.height));
-    if (hitWall) {
-      gameOver();
-      return;
-    }
-    snake.unshift(newHead);
-    if (rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, apple.x, apple.y, CELL_SIZE, CELL_SIZE)) {
-      score++;
-      addXp(2);
-      spawnApple();
-      growthRemaining += rand(1, 8);
-    } else if (!growthRemaining) {
-      snake.pop();
-    } else {
-      growthRemaining--;
-    }
-    draw();
-  }
-  function draw() {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#444";
-    ctx.font = `${FONT_SIZE}px 'Courier New', monospace`;
-    walls.forEach((w) => {
-      ctx.fillText(w.text, w.x, w.y);
-    });
-    ctx.fillStyle = "#f00";
-    ctx.fillRect(apple.x, apple.y, CELL_SIZE, CELL_SIZE);
-    ctx.fillStyle = "#fff";
-    ctx.fillText("@", apple.x + 2, apple.y - 2);
-    ctx.fillStyle = "#0f0";
-    snake.forEach((s) => {
-      ctx.fillRect(s.x, s.y, CELL_SIZE - 2, CELL_SIZE - 2);
-    });
-    ctx.fillStyle = "#fff";
-    ctx.fillText(`Score: ${score} | XP: ${$store.xp.get()}`, 10, 10);
-  }
-  function spawnApple() {
-    const WALL_MARGIN = 2 * CELL_SIZE;
-    let valid = false;
-    while (!valid) {
-      const rx = Math.floor(Math.random() * (canvas.width - CELL_SIZE));
-      const ry = Math.floor(Math.random() * (canvas.height - CELL_SIZE));
-      apple.x = Math.floor(rx / CELL_SIZE) * CELL_SIZE;
-      apple.y = Math.floor(ry / CELL_SIZE) * CELL_SIZE;
-      const collideWall = walls.some((w) => rectIntersect(apple.x, apple.y, CELL_SIZE, CELL_SIZE, w.x - WALL_MARGIN, w.y - WALL_MARGIN, w.width + WALL_MARGIN * 2, w.height + WALL_MARGIN * 2));
-      const collideSnake = snake.some((s) => rectIntersect(apple.x, apple.y, CELL_SIZE, CELL_SIZE, s.x, s.y, CELL_SIZE, CELL_SIZE));
-      if (!collideWall && !collideSnake) {
-        valid = true;
-      }
-    }
-    if (Math.random() < 0.2) {
-      setTimeout(spawnApple, 5000);
-    }
-  }
-  function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
-    return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
-  }
-  function gameOver() {
-    clearInterval(gameLoopId);
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#f00";
-    ctx.font = "40px monospace";
-    const msg = "GAME OVER";
-    const metrics = ctx.measureText(msg);
-    ctx.fillText(msg, (canvas.width - metrics.width) / 2, canvas.height / 2 - 40);
-    ctx.fillStyle = "#fff";
-    ctx.font = "20px monospace";
-    const scoreMsg = `Score: ${score} | Press ENTER to Continue`;
-    const smMetrics = ctx.measureText(scoreMsg);
-    ctx.fillText(scoreMsg, (canvas.width - smMetrics.width) / 2, canvas.height / 2 + 10);
-    const closeHandler = (e) => {
-      if (e.key === "Enter" || e.key === "Escape") {
-        window.removeEventListener("keydown", closeHandler);
-        cleanup();
-      }
-    };
-    window.removeEventListener("keydown", handleKey);
-    window.addEventListener("keydown", closeHandler);
-    print("Snake Game Over! Gained " + score * 2 + " xp!");
-    if (score >= 20) {
-      unlockAchievement("snake_master");
-    }
-  }
-  function cleanup() {
-    clearInterval(gameLoopId);
-    window.removeEventListener("keydown", handleKey);
-    if (canvas && canvas.parentNode)
-      canvas.parentNode.removeChild(canvas);
-    output.style.display = originalOutputDisplay;
-    inputLine.style.display = originalInputLineDisplay;
-    input.focus();
-    $store.busy.set(false);
-  }
-  gameLoopId = window.setInterval(update, 100);
-  draw();
 }
 
 // src/game/pong.ts
@@ -1722,19 +1412,209 @@ function startPong() {
   gameLoopId = requestAnimationFrame(loop);
 }
 
+// src/game/snake.ts
+function startSnake() {
+  $store.busy.set(true);
+  const originalOutputDisplay = output.style.display;
+  const inputLine = qs("#input-line");
+  const originalInputLineDisplay = inputLine.style.display;
+  output.style.display = "none";
+  inputLine.style.display = "none";
+  input.blur();
+  const canvas = document.createElement("canvas");
+  canvas.id = "snake-canvas";
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.zIndex = "2000";
+  canvas.style.backgroundColor = "#000";
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    alert("Canvas not supported!");
+    cleanup();
+    $store.busy.set(false);
+    return;
+  }
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const CELL_SIZE = 20;
+  const FONT_SIZE = 16;
+  ctx.font = `${FONT_SIZE}px 'Courier New', monospace`;
+  ctx.textBaseline = "top";
+  let snake = [{
+    x: Math.floor(canvas.width / 2 / CELL_SIZE) * CELL_SIZE,
+    y: Math.floor(canvas.height / 2 / CELL_SIZE) * CELL_SIZE
+  }];
+  let direction = { x: CELL_SIZE, y: 0 };
+  let nextDirection = { x: CELL_SIZE, y: 0 };
+  let score = 0;
+  let gameLoopId;
+  let apple = { x: 0, y: 0 };
+  const walls = [];
+  const terminalText = output.innerText || "VOID ERROR NULL SYSTEM FAILURE";
+  const words = terminalText.split(" ").filter((w) => w.length > 3 && w.length < 20).sort(() => Math.random() - 0.5).slice(0, 150);
+  words.forEach((word) => {
+    const metrics = ctx.measureText(word);
+    const w = metrics.width;
+    const h = FONT_SIZE;
+    for (let i = 0;i < 10; i++) {
+      const wx = Math.random() * (canvas.width - w);
+      const wy = Math.random() * (canvas.height - h);
+      const snapX = Math.floor(wx / CELL_SIZE) * CELL_SIZE;
+      const snapY = Math.floor(wy / CELL_SIZE) * CELL_SIZE;
+      const overlap = walls.some((wall) => snapX < wall.x + wall.width && snapX + w > wall.x && snapY < wall.y + wall.height && snapY + h > wall.y);
+      const onSnake = Math.abs(snapX - snake[0].x) < 100 && Math.abs(snapY - snake[0].y) < 100;
+      if (!overlap && !onSnake) {
+        walls.push({
+          x: snapX,
+          y: snapY,
+          width: w,
+          height: h,
+          text: word
+        });
+        break;
+      }
+    }
+  });
+  spawnApple();
+  function handleKey(e) {
+    switch (e.key) {
+      case "ArrowUp":
+        if (direction.y === 0)
+          nextDirection = { x: 0, y: -CELL_SIZE };
+        break;
+      case "ArrowDown":
+        if (direction.y === 0)
+          nextDirection = { x: 0, y: CELL_SIZE };
+        break;
+      case "ArrowLeft":
+        if (direction.x === 0)
+          nextDirection = { x: -CELL_SIZE, y: 0 };
+        break;
+      case "ArrowRight":
+        if (direction.x === 0)
+          nextDirection = { x: CELL_SIZE, y: 0 };
+        break;
+      case "Escape":
+        cleanup();
+        break;
+    }
+  }
+  window.addEventListener("keydown", handleKey);
+  let growthRemaining = 0;
+  function update() {
+    direction = nextDirection;
+    const head = snake[0];
+    const newHead = { x: head.x + direction.x, y: head.y + direction.y };
+    if (newHead.x < 0 || newHead.x >= canvas.width || newHead.y < 0 || newHead.y >= canvas.height) {
+      gameOver();
+      return;
+    }
+    if (snake.some((s, i) => i !== 0 && rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, s.x, s.y, CELL_SIZE, CELL_SIZE))) {
+      gameOver();
+      return;
+    }
+    const hitWall = walls.some((wall) => rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, wall.x, wall.y, wall.width, wall.height));
+    if (hitWall) {
+      gameOver();
+      return;
+    }
+    snake.unshift(newHead);
+    if (rectIntersect(newHead.x, newHead.y, CELL_SIZE, CELL_SIZE, apple.x, apple.y, CELL_SIZE, CELL_SIZE)) {
+      score++;
+      addXp(2);
+      spawnApple();
+      growthRemaining += rand(1, 8);
+    } else if (!growthRemaining) {
+      snake.pop();
+    } else {
+      growthRemaining--;
+    }
+    draw();
+  }
+  function draw() {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#444";
+    ctx.font = `${FONT_SIZE}px 'Courier New', monospace`;
+    walls.forEach((w) => {
+      ctx.fillText(w.text, w.x, w.y);
+    });
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(apple.x, apple.y, CELL_SIZE, CELL_SIZE);
+    ctx.fillStyle = "#fff";
+    ctx.fillText("@", apple.x + 2, apple.y - 2);
+    ctx.fillStyle = "#0f0";
+    snake.forEach((s) => {
+      ctx.fillRect(s.x, s.y, CELL_SIZE - 2, CELL_SIZE - 2);
+    });
+    ctx.fillStyle = "#fff";
+    ctx.fillText(`Score: ${score} | XP: ${$store.xp.get()}`, 10, 10);
+  }
+  function spawnApple() {
+    const WALL_MARGIN = 2 * CELL_SIZE;
+    let valid = false;
+    while (!valid) {
+      const rx = Math.floor(Math.random() * (canvas.width - CELL_SIZE));
+      const ry = Math.floor(Math.random() * (canvas.height - CELL_SIZE));
+      apple.x = Math.floor(rx / CELL_SIZE) * CELL_SIZE;
+      apple.y = Math.floor(ry / CELL_SIZE) * CELL_SIZE;
+      const collideWall = walls.some((w) => rectIntersect(apple.x, apple.y, CELL_SIZE, CELL_SIZE, w.x - WALL_MARGIN, w.y - WALL_MARGIN, w.width + WALL_MARGIN * 2, w.height + WALL_MARGIN * 2));
+      const collideSnake = snake.some((s) => rectIntersect(apple.x, apple.y, CELL_SIZE, CELL_SIZE, s.x, s.y, CELL_SIZE, CELL_SIZE));
+      if (!collideWall && !collideSnake) {
+        valid = true;
+      }
+    }
+    if (Math.random() < 0.2) {
+      setTimeout(spawnApple, 5000);
+    }
+  }
+  function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
+    return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
+  }
+  function gameOver() {
+    clearInterval(gameLoopId);
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#f00";
+    ctx.font = "40px monospace";
+    const msg = "GAME OVER";
+    const metrics = ctx.measureText(msg);
+    ctx.fillText(msg, (canvas.width - metrics.width) / 2, canvas.height / 2 - 40);
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px monospace";
+    const scoreMsg = `Score: ${score} | Press ENTER to Continue`;
+    const smMetrics = ctx.measureText(scoreMsg);
+    ctx.fillText(scoreMsg, (canvas.width - smMetrics.width) / 2, canvas.height / 2 + 10);
+    const closeHandler = (e) => {
+      if (e.key === "Enter" || e.key === "Escape") {
+        window.removeEventListener("keydown", closeHandler);
+        cleanup();
+      }
+    };
+    window.removeEventListener("keydown", handleKey);
+    window.addEventListener("keydown", closeHandler);
+    print("Snake Game Over! Gained " + score * 2 + " xp!");
+    if (score >= 20) {
+      unlockAchievement("snake_master");
+    }
+  }
+  function cleanup() {
+    clearInterval(gameLoopId);
+    window.removeEventListener("keydown", handleKey);
+    if (canvas && canvas.parentNode)
+      canvas.parentNode.removeChild(canvas);
+    output.style.display = originalOutputDisplay;
+    inputLine.style.display = originalInputLineDisplay;
+    input.focus();
+    $store.busy.set(false);
+  }
+  gameLoopId = window.setInterval(update, 100);
+  draw();
+}
+
 // src/commands/games.ts
-function cmdHack() {
-  startHack();
-}
-function cmdMine() {
-  startMining();
-}
-function cmdShop(args) {
-  startShop(args);
-}
-function cmdVim() {
-  openVim();
-}
 function cmdSnake() {
   startSnake();
   unlockAchievement("snake_player");
@@ -1755,48 +1635,65 @@ function cmdZhiva(arg) {
   location.href = `zhiva://start/${target}`;
 }
 
-// src/commands/system.ts
-function cmdClear() {
-  clear();
-  achievementCounters.clearCount++;
-  if (achievementCounters.clearCount >= 10)
-    unlockAchievement("clean_freak");
+// src/commands/help.ts
+function printAvailable(name, description) {
+  print(`  <span class="success">${name}</span> - ${description}`);
 }
-function cmdReset() {
-  resetGame();
-}
-function cmdWelcome() {
-  welcome();
-}
-function cmdExit() {
-  print("There is no escape.", "error");
-  achievementCounters.exitCount++;
-  if (achievementCounters.exitCount >= 5)
-    unlockAchievement("escape_artist");
-}
-function cmdSuglite() {
-  print("Suglite is watching...", "system");
-}
-function cmdReturn() {
-  localStorage.setItem("notHappened", "true");
-  location.reload();
-}
-function cmdRun() {
-  localStorage.removeItem("run");
-  location.reload();
+function cmdHelp() {
+  let userLevel = $store.level.get();
+  print("Available commands:");
+  printAvailable("help", "Show this help message");
+  printAvailable("status", "Show your current level and XP");
+  printAvailable("hack", "Start a hacking mission to gain XP");
+  printAvailable("links", "Show unlocked links");
+  printAvailable("clear", "Clear the terminal");
+  printAvailable("source", "Source code");
+  printAvailable("news", "Show latest news");
+  printAvailable("mail", "See inbox / Send mail");
+  if (userLevel < 1)
+    return;
+  printAvailable("a (achievements)", "Show your achievements");
+  printAvailable("mine", "Mine for XP (Process intensive)");
+  printAvailable("date", "Show current system time");
+  printAvailable("whoami", "Display current user");
+  printAvailable("echo [text]", "Print text to terminal");
+  if (userLevel < 2)
+    return;
+  printAvailable("ls/dir", "List directory contents");
+  printAvailable("cd [path]", "Change directory");
+  printAvailable("cat [file]", "Read file content");
+  printAvailable("pwd", "Print working directory");
+  if (userLevel < 3)
+    return;
+  printAvailable("zhiva [name]", "Run Zhiva app");
+  printAvailable("snake", "Play Snake (Earn XP!)");
+  printAvailable("vim/vi", "Open vim editor");
+  if (userLevel < 4)
+    return;
+  printAvailable("pong", "Play Pong (Earn XP!)");
+  if (userLevel < 5)
+    return;
+  printAvailable("shop", "Open the Dark Market (Buy upgrades)");
+  printAvailable("reset", "Reset your game progress");
+  printAvailable("coinflip", "Flip a coin");
+  printAvailable("matrix", "Enter the Matrix");
 }
 
-// src/commands/developer.ts
-function cmdXp(arg) {
-  if (!isNaN(+arg)) {
-    addXp(+arg);
-    print("Gained " + arg + " XP! Cheater :/", "success");
-  }
+// src/commands/info.ts
+function cmdStatus() {
+  showStatus();
+  unlockAchievement("status_check");
 }
-function cmdSetAchievement(id) {
-  if (id) {
-    unlockAchievement(id);
-  }
+function cmdAchievements() {
+  print(`Available Achievements (${getAchievementProgress()}):`);
+  const visible = getVisibleAchievements();
+  visible.forEach((a) => {
+    if (a.unlocked) {
+      print(`[x] <span class="success">${a.name}</span> - ${a.description} (+${a.xp} XP)`, "system");
+    } else {
+      print(`[ ] ${a.name} - ${a.description} (+${a.xp} XP)`, "dim");
+    }
+  });
 }
 
 // src/commands/mail.ts
@@ -1854,27 +1751,125 @@ function cmdMail(args, fullArgs) {
   }
 }
 
+// src/commands/news.ts
+async function cmdNews() {
+  print("Fetching latest news from headquarters...", "system");
+  input.disabled = true;
+  try {
+    const response = await fetch("https://api.github.com/repos/wxn0brP/wxn0.xyz/commits?per_page=100");
+    if (!response.ok) {
+      throw new Error(`GitHub API returned ${response.status}`);
+    }
+    const commits = await response.json();
+    let count = 0;
+    let versionCount = 0;
+    print("=== LATEST TRANSMISSIONS ===", "header");
+    for (const commit of commits) {
+      const message = commit.commit.message.split(`
+`)[0];
+      if (message.startsWith("feat: v") && /\d+\.\d+\.\d+/.test(message)) {
+        versionCount++;
+        if (versionCount >= 2) {
+          break;
+        }
+      }
+      print(`<span style="color: #aaa">[${commit.commit.author.date.substring(0, 10)}]</span> <span style="color: #fff">${message}</span>`);
+      count++;
+    }
+    if (count === 0) {
+      print("No recent news found.", "warning");
+    } else {
+      unlockAchievement("informed");
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      print(`Failed to fetch news: ${err.message}`, "error");
+    } else {
+      print(`Failed to fetch news: Unknown error`, "error");
+    }
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+// src/commands/system.ts
+function cmdClear() {
+  clear();
+  achievementCounters.clearCount++;
+  if (achievementCounters.clearCount >= 10)
+    unlockAchievement("clean_freak");
+}
+function cmdReset() {
+  resetGame();
+}
+function cmdWelcome() {
+  welcome();
+}
+function cmdExit() {
+  print("There is no escape.", "error");
+  achievementCounters.exitCount++;
+  if (achievementCounters.exitCount >= 5)
+    unlockAchievement("escape_artist");
+}
+function cmdSuglite() {
+  print("Suglite is watching...", "system");
+}
+function cmdReturn() {
+  localStorage.setItem("notHappened", "true");
+  location.reload();
+}
+function cmdRun() {
+  localStorage.removeItem("run");
+  location.reload();
+}
+
 // src/commands/index.ts
 var registry = {
   help: { fn: () => cmdHelp() },
   status: { fn: () => cmdStatus() },
   achievements: { aliases: ["a"], fn: () => cmdAchievements() },
-  links: { fn: () => cmdLinks() },
-  whoami: { fn: () => cmdWhoami() },
-  date: { fn: () => cmdDate() },
-  github: { aliases: ["git", "source"], fn: () => cmdGithub() },
+  links: {
+    fn: () => {
+      showLinks();
+      unlockAchievement("link_finder");
+    }
+  },
+  whoami: {
+    fn: () => {
+      print("guest@wxn0.xyz");
+      unlockAchievement("self_aware");
+    }
+  },
+  date: {
+    fn: () => {
+      print(new Date().toString());
+      unlockAchievement("time_traveler");
+    }
+  },
+  github: {
+    aliases: ["git", "source"],
+    fn: () => {
+      window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
+    }
+  },
   news: { aliases: ["changelog", "updates"], fn: () => cmdNews() },
   hello: { aliases: ["hi"], fn: () => cmdHello() },
   ls: { aliases: ["ll"], fn: ({ args }) => cmdLs(args[0]) },
-  dir: { fn: () => cmdDir() },
+  dir: { fn: () => print("Windows sucks.", "error") },
   cd: { fn: ({ args }) => cmdCd(args[0]) },
-  pwd: { fn: () => cmdPwd() },
+  pwd: { fn: () => print(fileSystem.getCWD()) },
   cat: { fn: ({ args }) => cmdCat(args[0]) },
-  rm: { fn: () => cmdRm() },
-  hack: { fn: () => cmdHack() },
-  mine: { fn: () => cmdMine() },
-  shop: { aliases: ["store"], fn: ({ fullArgs }) => cmdShop(fullArgs) },
-  vim: { aliases: ["vi"], fn: () => cmdVim() },
+  rm: {
+    fn: () => {
+      print("Permission denied.", "error");
+      unlockAchievement("destructor");
+    }
+  },
+  hack: { fn: () => startHack() },
+  mine: { fn: () => startMining() },
+  shop: { aliases: ["store"], fn: ({ fullArgs }) => startShop(fullArgs) },
+  vim: { aliases: ["vi"], fn: () => openVim() },
   snake: { fn: () => cmdSnake() },
   pong: { aliases: ["ping"], fn: () => cmdPong() },
   zhiva: { fn: ({ args }) => cmdZhiva(args[0]) },
@@ -1893,7 +1888,7 @@ var registry = {
   coinflip: { fn: () => cmdCoinflip() },
   42: { fn: () => cmd42() },
   konami: { fn: () => cmdKonami() },
-  xp: { fn: ({ args }) => cmdXp(args[0]) },
+  "add-xp": { fn: ({ args }) => cmdXp(args[0]) },
   "set-achievement": { fn: ({ args }) => cmdSetAchievement(args[0]) }
 };
 var commandsList = Object.keys(registry).flatMap((key) => {
