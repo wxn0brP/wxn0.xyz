@@ -31,16 +31,14 @@ export async function cmdNews() {
 
         for (const commit of commits) {
             const message = commit.commit.message.split("\n")[0];
+            print(`<span style="color: #aaa">[${commit.commit.author.date.substring(0, 10)}]</span> <span style="color: #fff">${message}</span>`);
+            count++;
 
             if (message.startsWith("feat: v") && /\d+\.\d+\.\d+/.test(message)) {
                 versionCount++;
-                if (versionCount >= 2) {
+                if (versionCount >= 2)
                     break;
-                }
             }
-
-            print(`<span style="color: #aaa">[${commit.commit.author.date.substring(0, 10)}]</span> <span style="color: #fff">${message}</span>`);
-            count++;
         }
 
         if (count === 0) {
