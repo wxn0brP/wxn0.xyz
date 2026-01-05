@@ -27,6 +27,6 @@ export interface Mail {
     timestamp: number;
 }
 
-export function getXpToNextLevel(level: number) {
-    return 100 + (level * 50);
+export function getXpToNextLevel(level: number): number {
+    return Math.floor(90 + 15 * Math.pow(level, 1.3));
 }
