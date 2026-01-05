@@ -226,7 +226,8 @@ var $store = createStore({
   credits: 0,
   xpMultiplier: 1,
   mails: [],
-  storyProgress: 0
+  storyProgress: 0,
+  busy: false
 });
 function getXpToNextLevel(level) {
   return 100 + level * 50;
@@ -657,6 +658,7 @@ async function startHack() {
 // src/game/mining.ts
 async function startMining() {
   input.disabled = true;
+  $store.busy.set(true);
   print("Initiating crypto-mining sequence...", "system");
   await delay(1000);
   print("Allocating resources... [CPU: 100%]", "dim");
@@ -680,6 +682,7 @@ async function startMining() {
   }
   input.disabled = false;
   input.focus();
+  $store.busy.set(false);
 }
 // src/commands/help.ts
 function printAvailable(name, description) {
@@ -1153,6 +1156,7 @@ function cmdHello() {
 
 // src/game/snake.ts
 function startSnake() {
+  $store.busy.set(true);
   const originalOutputDisplay = output.style.display;
   const inputLine = qs("#input-line");
   const originalInputLineDisplay = inputLine.style.display;
@@ -1171,6 +1175,7 @@ function startSnake() {
   if (!ctx) {
     alert("Canvas not supported!");
     cleanup();
+    $store.busy.set(false);
     return;
   }
   canvas.width = window.innerWidth;
@@ -1345,6 +1350,7 @@ function startSnake() {
     output.style.display = originalOutputDisplay;
     inputLine.style.display = originalInputLineDisplay;
     input.focus();
+    $store.busy.set(false);
   }
   gameLoopId = window.setInterval(update, 100);
   draw();
@@ -2228,6 +2234,8 @@ function resetIdleTimer() {
   }
   clearTimeout(idleTimeout);
   idleTimeout = setTimeout(() => {
+    if ($store.busy.get())
+      return;
     print("User idle. Engaging Matrix simulation...", "warning");
     isIdle = true;
     startMatrixEffect(0);
