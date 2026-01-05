@@ -6,3 +6,4 @@ export * from "./status";
 export * from "./welcome";
 export * from "./vim";
 export * from "./store";
+export * from "./story";

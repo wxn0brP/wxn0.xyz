@@ -4,6 +4,7 @@ import { checkUnlocks } from "./game";
 import { saveGame } from "./save";
 import { print } from "./ui";
 import { checkLevelAchievements } from "./achievements";
+import { checkStoryProgress } from "./game/story";
 
 export function addXp(xp: number) {
     const multiplier = $store.xpMultiplier.get();
@@ -24,9 +25,11 @@ export function addXp(xp: number) {
             print(`Check 'help' for new commands!`, "system");
             checkUnlocks();
             checkLevelAchievements(newLevel);
+            checkStoryProgress();
         } else {
             break;
         }
     }
+    checkStoryProgress();
     saveGame();
 }

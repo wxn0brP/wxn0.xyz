@@ -8,6 +8,8 @@ export function saveGame() {
         achievements: $store.achievements.get(),
         credits: $store.credits.get(),
         xpMultiplier: $store.xpMultiplier.get(),
+        mails: $store.mails.get(),
+        storyProgress: $store.storyProgress.get(),
     };
     localStorage.setItem("gameState", JSON.stringify(gameState));
 }
@@ -21,6 +23,8 @@ export function loadGame() {
         $store.achievements.set(gameState.achievements || []);
         $store.credits.set(gameState.credits || 0);
         $store.xpMultiplier.set(gameState.xpMultiplier || 1);
+        $store.mails.set(gameState.mails || []);
+        $store.storyProgress.set(gameState.storyProgress || 0);
         links.forEach(link => link.displayed = link.level <= gameState.level);
     }
 }
@@ -31,6 +35,8 @@ export function resetGame() {
     $store.xp.set(0);
     $store.achievements.set([]);
     $store.credits.set(0);
+    $store.mails.set([]);
+    $store.storyProgress.set(0);
     links.forEach(link => link.displayed = false);
     print("Game progress has been reset.", "system");
 }

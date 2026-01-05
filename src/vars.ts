@@ -13,7 +13,18 @@ export const $store = createStore({
     achievements: [] as string[],
     credits: 0,
     xpMultiplier: 1,
+    mails: [] as Mail[],
+    storyProgress: 0,
 });
+
+export interface Mail {
+    id: string;
+    from: string;
+    subject: string;
+    body: string;
+    read: boolean;
+    timestamp: number;
+}
 
 export function getXpToNextLevel(level: number) {
     return 100 + (level * 50);
