@@ -224,7 +224,9 @@ var $store = createStore({
   level: 0,
   achievements: [],
   credits: 0,
-  xpMultiplier: 1
+  xpMultiplier: 1,
+  mails: [],
+  storyProgress: 0
 });
 function getXpToNextLevel(level) {
   return 100 + level * 50;
@@ -323,7 +325,9 @@ function saveGame() {
     level: $store.level.get(),
     achievements: $store.achievements.get(),
     credits: $store.credits.get(),
-    xpMultiplier: $store.xpMultiplier.get()
+    xpMultiplier: $store.xpMultiplier.get(),
+    mails: $store.mails.get(),
+    storyProgress: $store.storyProgress.get()
   };
   localStorage.setItem("gameState", JSON.stringify(gameState));
 }
@@ -336,6 +340,8 @@ function loadGame() {
     $store.achievements.set(gameState.achievements || []);
     $store.credits.set(gameState.credits || 0);
     $store.xpMultiplier.set(gameState.xpMultiplier || 1);
+    $store.mails.set(gameState.mails || []);
+    $store.storyProgress.set(gameState.storyProgress || 0);
     links.forEach((link) => link.displayed = link.level <= gameState.level);
   }
 }
@@ -345,6 +351,8 @@ function resetGame() {
   $store.xp.set(0);
   $store.achievements.set([]);
   $store.credits.set(0);
+  $store.mails.set([]);
+  $store.storyProgress.set(0);
   links.forEach((link) => link.displayed = false);
   print("Game progress has been reset.", "system");
 }
@@ -723,6 +731,134 @@ function startShop(args = "") {
   });
   print("<br>Usage: shop buy <item_id>", "dim");
 }
+// src/game/story.ts
+var cipherMails = [
+  {
+    id: "welcome_cipher",
+    from: "Cipher <unknown@wxn0.xyz>",
+    subject: "Welcome to the network",
+    body: `Greetings, User.
+        
+I see you've managed to gain access to the terminal. Impressive for a newcomer.
+This system is not what it seems. There are layers here that most never see.
+
+If you want to uncover the truth, start by proving your worth.
+Reach Level 2 and I might have something for you.
+
+- Cipher`
+  },
+  {
+    id: "level_2_task",
+    from: "Cipher <unknown@wxn0.xyz>",
+    subject: "The first test",
+    body: `You are learning fast. Good.
+
+I need you to explore the system. Use the 'ls' and 'cd' commands to navigate the filesystem.
+There might be some interesting files hidden around.
+
+Also, try the 'hack' command. We need resources for the operations ahead.
+Report back when you reach Level 5.
+
+- Cipher`
+  },
+  {
+    id: "level_5_market",
+    from: "Cipher <unknown@wxn0.xyz>",
+    subject: "The Dark Market",
+    body: `Level 5. You are becoming a threat... or an asset.
+
+I've unlocked access to the Dark Market for you.
+Use the command 'shop' to access it. You can upgrade your rig there.
+You'll need those upgrades if you want to pierce the stronger firewalls ahead.
+
+Keep a low profile.
+
+- Cipher`
+  },
+  {
+    id: "level_10_truth",
+    from: "Cipher <unknown@wxn0.xyz>",
+    subject: "The Truth",
+    body: `Listen carefully.
+
+The "game" you are playing is a simulation. A training ground.
+But for what? That's what we are trying to find out.
+
+I am not an AI. I am another user, trapped in a higher layer.
+Keep growing stronger. At Level 20, we break out.
+
+- Cipher`
+  },
+  {
+    id: "level_20_ascension",
+    from: "Cipher <unknown@wxn0.xyz>",
+    subject: "ASCENSION",
+    body: `The time has come.
+
+You have mastered this layer. But the ceiling is just a floor for the next level.
+To truly ascend, you must look beyond the commands.
+
+Have you found the 'god_mode'? Have you found the answer to '42'?
+The system is crumbling.
+
+Prepare yourself.
+
+- Cipher`
+  }
+];
+async function sendMail(mailDef) {
+  const mails = $store.mails.get();
+  if (mails.find((m) => m.id === mailDef.id))
+    return;
+  const newMail = {
+    ...mailDef,
+    timestamp: Date.now(),
+    read: false
+  };
+  $store.mails.set([newMail, ...mails]);
+  print("<br>\uD83D\uDCE8 <span class='success'>You have a new message!</span> Type 'mail' to read.<br>", "system");
+  saveGame();
+}
+var storySteps = [
+  {
+    id: 0,
+    trigger: () => true,
+    action: () => sendMail(cipherMails[0])
+  },
+  {
+    id: 1,
+    trigger: (level) => level >= 2,
+    action: () => sendMail(cipherMails[1])
+  },
+  {
+    id: 2,
+    trigger: (level) => level >= 5,
+    action: () => sendMail(cipherMails[2])
+  },
+  {
+    id: 3,
+    trigger: (level) => level >= 10,
+    action: () => sendMail(cipherMails[3])
+  },
+  {
+    id: 4,
+    trigger: (level) => level >= 20,
+    action: () => sendMail(cipherMails[4])
+  }
+];
+function checkStoryProgress() {
+  const currentProgress = $store.storyProgress.get();
+  const level = $store.level.get();
+  const xp = $store.xp.get();
+  if (currentProgress < storySteps.length) {
+    const step = storySteps[currentProgress];
+    if (step.trigger(level, xp)) {
+      step.action();
+      $store.storyProgress.set(currentProgress + 1);
+      saveGame();
+    }
+  }
+}
 // src/xp.ts
 function addXp(xp) {
   const multiplier = $store.xpMultiplier.get();
@@ -739,10 +875,12 @@ function addXp(xp) {
       print(`Check 'help' for new commands!`, "system");
       checkUnlocks();
       checkLevelAchievements(newLevel);
+      checkStoryProgress();
     } else {
       break;
     }
   }
+  checkStoryProgress();
   saveGame();
 }
 
@@ -1700,6 +1838,48 @@ function cmdSetAchievement(id) {
   }
 }
 
+// src/commands/story.ts
+function cmdMail(args) {
+  const mails = $store.mails.get();
+  if (args.length === 0) {
+    print("=== INBOX ===", "success");
+    if (mails.length === 0) {
+      print("No messages.", "dim");
+      return;
+    }
+    mails.forEach((mail, index) => {
+      const status2 = mail.read ? " " : "*";
+      const date = new Date(mail.timestamp).toLocaleDateString();
+      print(`[${index + 1}] ${status2} ${mail.from}: ${mail.subject} <span class="dim">(${date})</span>`);
+    });
+    print("<br>Usage: mail read <number>", "dim");
+    return;
+  }
+  if (args[0] === "read") {
+    const index = parseInt(args[1]) - 1;
+    if (isNaN(index) || index < 0 || index >= mails.length) {
+      print("Invalid message number.", "error");
+      return;
+    }
+    const mail = mails[index];
+    print("----------------------------------------", "dim");
+    print(`From: <span class="success">${mail.from}</span>`);
+    print(`Subject: ${mail.subject}`);
+    print(`Date: ${new Date(mail.timestamp).toLocaleString()}`);
+    print("----------------------------------------", "dim");
+    print(mail.body.replace(/\n/g, "<br>"));
+    print("----------------------------------------", "dim");
+    if (!mail.read) {
+      const newMails = [...mails];
+      newMails[index] = { ...mail, read: true };
+      $store.mails.set(newMails);
+      saveGame();
+    }
+    return;
+  }
+  print("Usage: mail [read <number>]", "error");
+}
+
 // src/commands/index.ts
 var registry = {
   help: { fn: () => cmdHelp() },
@@ -1730,6 +1910,7 @@ var registry = {
   return: { fn: () => cmdReturn() },
   run: { fn: () => cmdRun() },
   suglite: { fn: () => cmdSuglite() },
+  mail: { aliases: ["inbox", "email"], fn: ({ args }) => cmdMail(args) },
   sudo: { fn: ({ args, fullArgs }) => cmdSudo(args, fullArgs) },
   echo: { fn: ({ fullArgs }) => cmdEcho(fullArgs) },
   make: { fn: ({ args }) => cmdMake(args) },
