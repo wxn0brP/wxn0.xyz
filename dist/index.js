@@ -429,7 +429,9 @@ var $store = createStore({
   level: 0,
   achievements: []
 });
-var xpToNextLevel = 100;
+function getXpToNextLevel(level) {
+  return 100 + level * 50;
+}
 var targets = [
   "corporate-mainframe-j7",
   "government-server-omega",
@@ -594,8 +596,7 @@ function getVisibleAchievements() {
       continue;
     } else if (levelLocked) {
       continue;
-      continue;
-    } else if (nextCount < 5) {
+    } else if (nextCount < 5 && (achievement.requiredLevel === undefined || achievement.requiredLevel <= currentLevel)) {
       visible.push({ ...achievement, unlocked: false });
       nextCount++;
     }
@@ -606,14 +607,20 @@ function getVisibleAchievements() {
 // src/xp.ts
 function addXp(xp) {
   incrementCell($store.xp, xp);
-  if ($store.xp.get() >= xpToNextLevel) {
-    incrementCell($store.level, 1);
-    decrementCell($store.xp, xpToNextLevel);
-    const newLevel = $store.level.get();
-    print(`Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
-    print(`Check 'help' for new commands!`, "system");
-    checkUnlocks();
-    checkLevelAchievements(newLevel);
+  while (true) {
+    const currentLevel = $store.level.get();
+    const required = getXpToNextLevel(currentLevel);
+    if ($store.xp.get() >= required) {
+      decrementCell($store.xp, required);
+      incrementCell($store.level, 1);
+      const newLevel = $store.level.get();
+      print(`Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
+      print(`Check 'help' for new commands!`, "system");
+      checkUnlocks();
+      checkLevelAchievements(newLevel);
+    } else {
+      break;
+    }
   }
   saveGame();
 }
@@ -633,6 +640,7 @@ function tryHack(input2) {
     const xpGained = Math.floor(Math.random() * 30) + 20;
     print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
     addXp(xpGained);
+    unlockAchievement("hacker");
     achievementCounters.hackCount++;
     if (achievementCounters.hackCount >= 10)
       unlockAchievement("hacker_pro");
@@ -785,7 +793,7 @@ async function systemDestroy() {
 // src/game/status.ts
 function showStatus() {
   print(`Level: <span class="success">${$store.level.get()}</span>`);
-  print(`XP: <span class="success">${$store.xp.get()}/${xpToNextLevel}</span>`);
+  print(`XP: <span class="success">${$store.xp.get()}/${getXpToNextLevel($store.level.get())}</span>`);
 }
 function showLinks() {
   print("Unlocked links:");
@@ -1454,7 +1462,6 @@ function handleCommand(command) {
       break;
     case "hack":
       startHack();
-      unlockAchievement("hacker");
       break;
     case "mine":
       startMining();
