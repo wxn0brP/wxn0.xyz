@@ -494,7 +494,7 @@ function checkUnlocks() {
     if (!wasUnlocked)
       return;
     link.displayed = true;
-    print(`New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
+    print(`\uD83C\uDF10 New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
   });
   saveGame();
 }
@@ -614,7 +614,7 @@ function addXp(xp) {
       decrementCell($store.xp, required);
       incrementCell($store.level, 1);
       const newLevel = $store.level.get();
-      print(`Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
+      print(`⬆️ Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
       print(`Check 'help' for new commands!`, "system");
       checkUnlocks();
       checkLevelAchievements(newLevel);
