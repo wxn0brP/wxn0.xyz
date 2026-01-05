@@ -1,4 +1,4 @@
-import { print } from "../ui";
+import { input, print } from "../ui";
 import { unlockAchievement, achievementCounters } from "../achievements";
 import { fileSystem } from "../filesystem";
 import { cat as catGame } from "../game/cat";
@@ -14,6 +14,7 @@ export function cmdDir() {
 
 export function cmdCd(arg: string) {
     fileSystem.cd(arg);
+    qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
     achievementCounters.cdCount++;
     if (achievementCounters.cdCount >= 5) unlockAchievement("navigator");
 }

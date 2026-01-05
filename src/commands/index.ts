@@ -12,6 +12,7 @@ import { print, printCommand } from "../ui";
 import { unlockAchievement, achievementCounters } from "../achievements";
 import { hackingMission } from "../vars";
 import { tryHack } from "../game";
+import { fileSystem } from "../filesystem";
 
 interface CommandContext {
     args: string[];
@@ -101,7 +102,11 @@ export function handleCommand(command: string) {
     const fullArgs = command.substring(cmdName.length + 1);
     const lowerCmd = cmdName.toLowerCase();
 
-    print("$ " + command);
+    const commandId = Date.now();
+    print(
+        `<span style="color: magenta">${fileSystem.getCWD()} $</span> ` +
+        `<span id="cmd_${commandId}">${command}</span>`
+    );
 
     let commandDef: CommandDefinition | undefined;
 
@@ -129,5 +134,6 @@ export function handleCommand(command: string) {
             achievementCounters.failedCommandCount = 1;
         }
         print(`Command not found: <span class="error">${command}</span>`, "error");
+        qs("#cmd_" + commandId).classList.add("error");
     }
 }

@@ -57,10 +57,13 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
-window.addEventListener("keyup", (e) => {
+function colorCommand() {
     const cmd = input.value.split(" ")[0].toLowerCase();
     input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
-});
+}
+
+window.addEventListener("keyup", colorCommand);
+window.addEventListener("input", colorCommand);
 
 const konamiCode = [
     "ArrowUp", "ArrowUp",
