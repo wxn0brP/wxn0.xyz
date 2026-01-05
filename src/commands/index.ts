@@ -1,18 +1,16 @@
-import { cmdHelp } from "./help";
-import { cmdStatus, cmdAchievements } from "./info";
-import { cmdLinks, cmdWhoami, cmdDate, cmdGithub } from "./social";
-import { cmdNews } from "./news";
-import { cmdLs, cmdDir, cmdCd, cmdPwd, cmdCat, cmdRm } from "./filesystem";
-import { cmdSudo, cmdEcho, cmdMake, cmdMatrix, cmdCoinflip, cmd42, cmdKonami, cmdHello } from "./fun";
-import { cmdHack, cmdMine, cmdShop, cmdVim, cmdSnake, cmdPong, cmdZhiva } from "./games";
-import { cmdClear, cmdReset, cmdWelcome, cmdExit, cmdSuglite, cmdReturn, cmdRun } from "./system";
-import { cmdXp, cmdSetAchievement } from "./developer";
-import { cmdMail } from "./mail";
-
-import { print, printCommand } from "../ui";
-import { unlockAchievement, achievementCounters } from "../achievements";
-import { hackingMission, tryHack } from "../game";
+import { achievementCounters, unlockAchievement } from "../achievements";
 import { fileSystem } from "../filesystem";
+import { hackingMission, openVim, showLinks, startHack, startMining, startShop, tryHack } from "../game";
+import { print, printCommand } from "../ui";
+import { cmdSetAchievement, cmdXp } from "./developer";
+import { cmdCat, cmdCd, cmdLs } from "./filesystem";
+import { cmd42, cmdCoinflip, cmdEcho, cmdHello, cmdKonami, cmdMake, cmdMatrix, cmdSudo } from "./fun";
+import { cmdPong, cmdSnake, cmdZhiva } from "./games";
+import { cmdHelp } from "./help";
+import { cmdAchievements, cmdStatus } from "./info";
+import { cmdMail } from "./mail";
+import { cmdNews } from "./news";
+import { cmdClear, cmdExit, cmdReset, cmdReturn, cmdRun, cmdSuglite, cmdWelcome } from "./system";
 
 interface CommandContext {
     args: string[];
@@ -33,26 +31,50 @@ const registry: Record<string, CommandDefinition> = {
     achievements: { aliases: ["a"], fn: () => cmdAchievements() },
 
     // Social
-    links: { fn: () => cmdLinks() },
-    whoami: { fn: () => cmdWhoami() },
-    date: { fn: () => cmdDate() },
-    github: { aliases: ["git", "source"], fn: () => cmdGithub() },
+    links: {
+        fn: () => {
+            showLinks();
+            unlockAchievement("link_finder");
+        }
+    },
+    whoami: {
+        fn: () => {
+            print("guest@wxn0.xyz");
+            unlockAchievement("self_aware");
+        }
+    },
+    date: {
+        fn: () => {
+            print(new Date().toString());
+            unlockAchievement("time_traveler");
+        }
+    },
+    github: {
+        aliases: ["git", "source"], fn: () => {
+            window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
+        }
+    },
     news: { aliases: ["changelog", "updates"], fn: () => cmdNews() },
     hello: { aliases: ["hi"], fn: () => cmdHello() },
 
     // Filesystem
     ls: { aliases: ["ll"], fn: ({ args }) => cmdLs(args[0]) },
-    dir: { fn: () => cmdDir() },
+    dir: { fn: () => print("Windows sucks.", "error") },
     cd: { fn: ({ args }) => cmdCd(args[0]) },
-    pwd: { fn: () => cmdPwd() },
+    pwd: { fn: () => print(fileSystem.getCWD()) },
     cat: { fn: ({ args }) => cmdCat(args[0]) },
-    rm: { fn: () => cmdRm() },
+    rm: {
+        fn: () => {
+            print("Permission denied.", "error");
+            unlockAchievement("destructor");
+        }
+    },
 
     // Games
-    hack: { fn: () => cmdHack() },
-    mine: { fn: () => cmdMine() },
-    shop: { aliases: ["store"], fn: ({ fullArgs }) => cmdShop(fullArgs) },
-    vim: { aliases: ["vi"], fn: () => cmdVim() },
+    hack: { fn: () => startHack() },
+    mine: { fn: () => startMining() },
+    shop: { aliases: ["store"], fn: ({ fullArgs }) => startShop(fullArgs) },
+    vim: { aliases: ["vi"], fn: () => openVim() },
     snake: { fn: () => cmdSnake() },
     pong: { aliases: ["ping"], fn: () => cmdPong() },
     zhiva: { fn: ({ args }) => cmdZhiva(args[0]) },
@@ -77,7 +99,7 @@ const registry: Record<string, CommandDefinition> = {
     konami: { fn: () => cmdKonami() },
 
     // Developer
-    xp: { fn: ({ args }) => cmdXp(args[0]) },
+    "add-xp": { fn: ({ args }) => cmdXp(args[0]) },
     "set-achievement": { fn: ({ args }) => cmdSetAchievement(args[0]) },
 };
 

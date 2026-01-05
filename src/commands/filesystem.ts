@@ -9,19 +9,11 @@ export function cmdLs(arg: string) {
     unlockAchievement("explorer");
 }
 
-export function cmdDir() {
-    print("Windows sucks.", "error");
-}
-
 export function cmdCd(arg: string) {
     fileSystem.cd(arg);
     resetDash();
     achievementCounters.cdCount++;
     if (achievementCounters.cdCount >= 5) unlockAchievement("navigator");
-}
-
-export function cmdPwd() {
-    print(fileSystem.getCWD());
 }
 
 export function cmdCat(arg: string) {
@@ -31,9 +23,4 @@ export function cmdCat(arg: string) {
     }
     fileSystem.cat(arg);
     unlockAchievement("reader");
-}
-
-export function cmdRm() {
-    print("Permission denied.", "error");
-    unlockAchievement("destructor");
 }

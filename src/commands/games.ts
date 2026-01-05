@@ -1,24 +1,7 @@
-import { print } from "../ui";
 import { unlockAchievement } from "../achievements";
-import { startHack, startMining, startShop, openVim } from "../game";
-import { startSnake } from "../game/snake";
 import { startPong } from "../game/pong";
-
-export function cmdHack() {
-    startHack();
-}
-
-export function cmdMine() {
-    startMining();
-}
-
-export function cmdShop(args: string) {
-    startShop(args);
-}
-
-export function cmdVim() {
-    openVim();
-}
+import { startSnake } from "../game/snake";
+import { print } from "../ui";
 
 export function cmdSnake() {
     startSnake();
