@@ -20,7 +20,7 @@ export function cmdHelp() {
     if (userLevel < 1) return;
 
     // Level 1
-    printAvailable("achievements/a", "Show your achievements");
+    printAvailable("a (achievements)", "Show your achievements");
     printAvailable("mine", "Mine for XP (Process intensive)");
     printAvailable("date", "Show current system time");
     printAvailable("whoami", "Display current user");
