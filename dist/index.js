@@ -1096,6 +1096,118 @@ function cat(code) {
   output.appendChild(p);
 }
 
+// src/complete.ts
+function handleAutoComplete(cmd, split) {
+  if (["ls", "cd", "cat"].includes(cmd)) {
+    const files = fileSystem.getFilesAndDirs(fileSystem.getCWD());
+    const matchingFiles = files.filter((file) => file.startsWith(split[1]));
+    if (matchingFiles.length === 1) {
+      split[1] = matchingFiles[0];
+      input.value = split.join(" ");
+      moveCursorToEnd();
+    }
+  }
+}
+
+// src/input.ts
+var commandHistory = [];
+var historyIndex = -1;
+var moveCursorToEnd = debounce(() => {
+  input.setSelectionRange(input.value.length, input.value.length);
+}, 50);
+function setInputWidth() {
+  const width = input.value.length * 10 + 200;
+  input.style.width = Math.min(width, window.innerWidth - 20) + "px";
+}
+setTimeout(setInputWidth, 20);
+input.addEventListener("input", setInputWidth);
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const command = input.value;
+    if (command) {
+      commandHistory.push(command);
+    }
+    historyIndex = commandHistory.length;
+    input.value = "";
+    handleCommand(command);
+  } else if (e.key === "ArrowUp") {
+    if (historyIndex > 0) {
+      historyIndex--;
+      input.value = commandHistory[historyIndex];
+      moveCursorToEnd();
+    }
+    setInputWidth();
+  } else if (e.key === "ArrowDown") {
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      input.value = commandHistory[historyIndex];
+      moveCursorToEnd();
+    } else {
+      historyIndex = commandHistory.length;
+      input.value = "";
+    }
+    setInputWidth();
+  } else if (e.ctrlKey && e.key === "l") {
+    clear();
+    e.preventDefault();
+  } else if (e.key === "Tab") {
+    e.preventDefault();
+    const split = input.value.split(" ");
+    const cmd = split[0].toLowerCase();
+    if (split.length > 1) {
+      handleAutoComplete(cmd, split);
+    } else {
+      const matchingCommands = commandsList.filter((command) => command.startsWith(cmd));
+      if (matchingCommands.length === 1) {
+        split[0] = matchingCommands[0];
+        input.value = split.join(" ");
+        moveCursorToEnd();
+      }
+    }
+  }
+});
+window.addEventListener("keydown", (e) => {
+  if (document.activeElement !== input) {
+    if (e.target instanceof HTMLAnchorElement && (e.key === "Enter" || e.key === " ")) {
+      return;
+    }
+    input.focus();
+  }
+});
+function colorCommand() {
+  const cmd = input.value.split(" ")[0].toLowerCase();
+  input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
+}
+window.addEventListener("keyup", colorCommand);
+window.addEventListener("input", colorCommand);
+var konamiCode = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a"
+];
+var konamiIndex = 0;
+window.addEventListener("keydown", (e) => {
+  if (e.key === konamiCode[konamiIndex]) {
+    konamiIndex++;
+    if (konamiIndex === konamiCode.length) {
+      handleCommand("konami");
+      konamiIndex = 0;
+    }
+  } else {
+    konamiIndex = 0;
+  }
+});
+function resetDash() {
+  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
+}
+
 // src/commands/filesystem.ts
 function cmdLs(arg) {
   fileSystem.ls(arg);
@@ -1106,7 +1218,7 @@ function cmdDir() {
 }
 function cmdCd(arg) {
   fileSystem.cd(arg);
-  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
+  resetDash();
   achievementCounters.cdCount++;
   if (achievementCounters.cdCount >= 5)
     unlockAchievement("navigator");
@@ -1175,7 +1287,7 @@ function cmd42() {
 function cmdKonami() {
   document.body.classList.toggle("god-mode");
   const isGod = document.body.classList.contains("god-mode");
-  const box = document.querySelector(".prompt");
+  const box = qs(".prompt");
   if (isGod) {
     print("GOD MODE ACTIVATED", "system");
     print("Unlimited power...", "dim");
@@ -1187,7 +1299,7 @@ function cmdKonami() {
   } else {
     print("God mode... disabled due to budget cuts.", "dim");
     if (box) {
-      box.textContent = ">";
+      resetDash();
       box.style.color = "";
     }
   }
@@ -1946,7 +2058,7 @@ async function welcome() {
   await delay(300);
   print("Type '<span class='success'>help</span>' to list available commands.");
   input.disabled = false;
-  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
+  resetDash();
 }
 // src/game/vim.ts
 var vimActive = false;
@@ -2089,115 +2201,6 @@ function startShop(args = "") {
   });
   print("<br>Usage: shop buy <item_id>", "dim");
 }
-// src/complete.ts
-function handleAutoComplete(cmd, split) {
-  if (["ls", "cd", "cat"].includes(cmd)) {
-    const files = fileSystem.getFilesAndDirs(fileSystem.getCWD());
-    const matchingFiles = files.filter((file) => file.startsWith(split[1]));
-    if (matchingFiles.length === 1) {
-      split[1] = matchingFiles[0];
-      input.value = split.join(" ");
-      moveCursorToEnd();
-    }
-  }
-}
-
-// src/input.ts
-var commandHistory = [];
-var historyIndex = -1;
-var moveCursorToEnd = debounce(() => {
-  input.setSelectionRange(input.value.length, input.value.length);
-}, 50);
-function setInputWidth() {
-  const width = input.value.length * 10 + 200;
-  input.style.width = Math.min(width, window.innerWidth - 20) + "px";
-}
-setTimeout(setInputWidth, 20);
-input.addEventListener("input", setInputWidth);
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    const command = input.value;
-    if (command) {
-      commandHistory.push(command);
-    }
-    historyIndex = commandHistory.length;
-    input.value = "";
-    handleCommand(command);
-  } else if (e.key === "ArrowUp") {
-    if (historyIndex > 0) {
-      historyIndex--;
-      input.value = commandHistory[historyIndex];
-      moveCursorToEnd();
-    }
-    setInputWidth();
-  } else if (e.key === "ArrowDown") {
-    if (historyIndex < commandHistory.length - 1) {
-      historyIndex++;
-      input.value = commandHistory[historyIndex];
-      moveCursorToEnd();
-    } else {
-      historyIndex = commandHistory.length;
-      input.value = "";
-    }
-    setInputWidth();
-  } else if (e.ctrlKey && e.key === "l") {
-    clear();
-    e.preventDefault();
-  } else if (e.key === "Tab") {
-    e.preventDefault();
-    const split = input.value.split(" ");
-    const cmd = split[0].toLowerCase();
-    if (split.length > 1) {
-      handleAutoComplete(cmd, split);
-    } else {
-      const matchingCommands = commandsList.filter((command) => command.startsWith(cmd));
-      if (matchingCommands.length === 1) {
-        split[0] = matchingCommands[0];
-        input.value = split.join(" ");
-        moveCursorToEnd();
-      }
-    }
-  }
-});
-window.addEventListener("keydown", (e) => {
-  if (document.activeElement !== input) {
-    if (e.target instanceof HTMLAnchorElement && (e.key === "Enter" || e.key === " ")) {
-      return;
-    }
-    input.focus();
-  }
-});
-function colorCommand() {
-  const cmd = input.value.split(" ")[0].toLowerCase();
-  input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
-}
-window.addEventListener("keyup", colorCommand);
-window.addEventListener("input", colorCommand);
-var konamiCode = [
-  "ArrowUp",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowLeft",
-  "ArrowRight",
-  "b",
-  "a"
-];
-var konamiIndex = 0;
-window.addEventListener("keydown", (e) => {
-  if (e.key === konamiCode[konamiIndex]) {
-    konamiIndex++;
-    if (konamiIndex === konamiCode.length) {
-      handleCommand("konami");
-      konamiIndex = 0;
-    }
-  } else {
-    konamiIndex = 0;
-  }
-});
-
 // src/matrix.ts
 var activeMatrixInterval = null;
 var activeCanvas = null;
