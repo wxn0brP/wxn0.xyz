@@ -16,18 +16,7 @@ export function openVim() {
     inputLine.style.display = "none";
 
     const vim = document.createElement("div");
-    vim.style.height = "100vh";
-    vim.style.backgroundColor = "#111";
-    vim.style.color = "#ccc";
-    vim.style.fontFamily = "monospace";
-    vim.style.display = "flex";
-    vim.style.flexDirection = "column";
-    vim.style.padding = "5px";
-    vim.style.zIndex = "1000";
-    vim.style.position = "fixed";
-    vim.style.top = "0";
-    vim.style.left = "0";
-    vim.style.width = "100%";
+    vim.classList.add("vim");
 
     vim.innerHTML = `
         <div style="flex: 1; white-space: pre-wrap; color: #4488ff;">~

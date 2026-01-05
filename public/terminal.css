@@ -90,3 +90,29 @@ a:hover {
 img {
     cursor: pointer;
 }
+
+.matrix {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.vim {
+    height: 100vh;
+    background-color: #111;
+    color: #ccc;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+}

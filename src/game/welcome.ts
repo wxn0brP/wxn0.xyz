@@ -14,7 +14,7 @@ export async function welcome() {
     print("----------------------------------------", "dim");
     print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
     print("Kernel v2.0.4-build.99 loaded.");
-    print("System Shell v0.0.7 loaded.")
+    print("System Shell v0.0.8 loaded.")
     print("----------------------------------------", "dim");
     await delay(300);
     print("Type '<span class='success'>help</span>' to list available commands.");
