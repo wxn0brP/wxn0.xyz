@@ -264,6 +264,7 @@ function print(message, className) {
   }
   output.appendChild(p);
   terminal.scrollTop = terminal.scrollHeight;
+  return p;
 }
 function printCommand(command) {
   if (!command.trim())
@@ -694,6 +695,7 @@ function cmdHelp() {
   printAvailable("links", "Show unlocked links");
   printAvailable("clear", "Clear the terminal");
   printAvailable("source", "Source code");
+  printAvailable("mail", "See inbox / Send mail");
   if (userLevel < 1)
     return;
   printAvailable("a (achievements)", "Show your achievements");
@@ -1582,8 +1584,8 @@ function cmdSetAchievement(id) {
   }
 }
 
-// src/commands/story.ts
-function cmdMail(args) {
+// src/commands/mail.ts
+function cmdMail(args, fullArgs) {
   const mails = $store.mails.get();
   if (args.length === 0) {
     print("=== INBOX ===", "success");
@@ -1596,13 +1598,24 @@ function cmdMail(args) {
       const date = new Date(mail2.timestamp).toLocaleDateString();
       print(`[${index2 + 1}] ${status} ${mail2.from}: ${mail2.subject} <span class="dim">(${date})</span>`);
     });
-    print("<br>Usage: mail read <number>", "dim");
+    print("<br>", "dim").textContent += "Usage: mail read <number> | mail send <message>";
+    return;
+  }
+  if (args[0] === "send") {
+    if (args.length === 1) {
+      print("Usage: mail send", "error").textContent += " <message>";
+      return;
+    }
+    const message = args.slice(1).join(" ");
+    const mailCodes = [109, "a", 105, 108, "t", 111, 58, "r", 7 * 8 + 5 * 11, 111, 116, Math.pow(2, 6)];
+    const mailURL = mailCodes.map((code) => typeof code === "string" ? code : String.fromCharCode(code)).join("");
+    location.href = `${mailURL}wxn0.xyz?subject=Mail from game&body=${encodeURIComponent(message)}`;
     return;
   }
   if (args[0] === "read")
     args.shift();
   if (args.length === 0) {
-    print("Usage: mail read <number>", "error");
+    print("Usage: mail read", "error").textContent += " <number>";
     return;
   }
   const index = parseInt(args[0]) - 1;
@@ -1656,7 +1669,7 @@ var registry = {
   return: { fn: () => cmdReturn() },
   run: { fn: () => cmdRun() },
   suglite: { fn: () => cmdSuglite() },
-  mail: { aliases: ["inbox", "email"], fn: ({ args }) => cmdMail(args) },
+  mail: { aliases: ["inbox", "email"], fn: ({ args, fullArgs }) => cmdMail(args, fullArgs) },
   sudo: { fn: ({ args, fullArgs }) => cmdSudo(args, fullArgs) },
   echo: { fn: ({ fullArgs }) => cmdEcho(fullArgs) },
   make: { fn: ({ args }) => cmdMake(args) },
