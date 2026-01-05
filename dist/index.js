@@ -230,7 +230,7 @@ var $store = createStore({
   busy: false
 });
 function getXpToNextLevel(level) {
-  return 100 + level * 50;
+  return Math.floor(90 + 15 * Math.pow(level, 1.3));
 }
 
 // src/ui.ts
