@@ -2170,12 +2170,14 @@ function resetIdleTimer() {
     stopMatrixEffect();
     isIdle = false;
     print("User motion detected. Matrix simulation suspended.", "dim");
+    document.title = originalTitle;
   }
   clearTimeout(idleTimeout);
   idleTimeout = setTimeout(() => {
     print("User idle. Engaging Matrix simulation...", "warning");
     isIdle = true;
     startMatrixEffect(0);
+    document.title = "You are being watched...";
   }, IDLE_TIME);
 }
 var originalTitle = document.title;
