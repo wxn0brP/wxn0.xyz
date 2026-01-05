@@ -17,7 +17,7 @@ export function addXp(xp: number) {
             incrementCell($store.level, 1);
 
             const newLevel = $store.level.get();
-            print(`Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
+            print(`⬆️ Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
             print(`Check 'help' for new commands!`, "system");
             checkUnlocks();
             checkLevelAchievements(newLevel);

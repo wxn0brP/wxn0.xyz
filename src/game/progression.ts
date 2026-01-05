@@ -11,7 +11,7 @@ export function checkUnlocks() {
         if (!wasUnlocked) return;
 
         link.displayed = true;
-        print(`New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
+        print(`🌐 New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
     });
     saveGame();
 }
