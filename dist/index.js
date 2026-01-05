@@ -530,7 +530,7 @@ function unlockAchievement(id) {
 }
 function checkCompletionist() {
   const unlocked = $store.achievements.get();
-  const nonHidden = achievements.filter((a) => !a.hidden);
+  const nonHidden = achievements.filter((a) => !a.hidden).filter((a) => a.id !== "completionist");
   const allNonHiddenUnlocked = nonHidden.every((a) => unlocked.includes(a.id));
   if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
     unlockAchievement("completionist");
@@ -1246,7 +1246,7 @@ function cmdSudo(args, fullArgs) {
     fileSystem.cat(args[1], true);
     return;
   }
-  if (fullArgs === "make me a sandwich") {
+  if (fullArgs === "make me a sandwitch") {
     print("Okay.", "success");
     unlockAchievement("curious");
     return;
