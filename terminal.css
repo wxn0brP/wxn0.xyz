@@ -30,7 +30,7 @@ body {
 
 .prompt {
     margin-right: 10px;
-    color: #f00;
+    color: magenta;
 }
 
 .executed {
@@ -40,7 +40,7 @@ body {
 #input {
     background-color: transparent;
     border: none;
-    color: yellow;
+    color: red;
     font-family: 'Courier New', Courier, monospace;
     font-size: 16px;
     width: 100%;

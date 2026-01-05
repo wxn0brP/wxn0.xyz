@@ -1049,6 +1049,7 @@ function cmdDir() {
 }
 function cmdCd(arg) {
   fileSystem.cd(arg);
+  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
   achievementCounters.cdCount++;
   if (achievementCounters.cdCount >= 5)
     unlockAchievement("navigator");
@@ -1673,7 +1674,8 @@ function handleCommand(command) {
   const [cmdName, ...args] = command.split(" ");
   const fullArgs = command.substring(cmdName.length + 1);
   const lowerCmd = cmdName.toLowerCase();
-  print("$ " + command);
+  const commandId = Date.now();
+  print(`<span style="color: magenta">${fileSystem.getCWD()} $</span> ` + `<span id="cmd_${commandId}">${command}</span>`);
   let commandDef;
   if (registry[lowerCmd]) {
     commandDef = registry[lowerCmd];
@@ -1698,6 +1700,7 @@ function handleCommand(command) {
       achievementCounters.failedCommandCount = 1;
     }
     print(`Command not found: <span class="error">${command}</span>`, "error");
+    qs("#cmd_" + commandId).classList.add("error");
   }
 }
 
@@ -1816,6 +1819,7 @@ async function welcome() {
   await delay(300);
   print("Type '<span class='success'>help</span>' to list available commands.");
   input.disabled = false;
+  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
 }
 // src/game/vim.ts
 var vimActive = false;
@@ -2009,10 +2013,12 @@ window.addEventListener("keydown", (e) => {
     input.focus();
   }
 });
-window.addEventListener("keyup", (e) => {
+function colorCommand() {
   const cmd = input.value.split(" ")[0].toLowerCase();
   input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
-});
+}
+window.addEventListener("keyup", colorCommand);
+window.addEventListener("input", colorCommand);
 var konamiCode = [
   "ArrowUp",
   "ArrowUp",
