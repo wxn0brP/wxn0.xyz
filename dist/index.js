@@ -1392,6 +1392,7 @@ function startPong() {
   let playerScore = 0;
   let aiScore = 0;
   let gameLoopId;
+  let hardMode = false;
   const keys = {
     ArrowUp: false,
     ArrowDown: false
@@ -1403,6 +1404,9 @@ function startPong() {
       keys.ArrowDown = true;
     if (e.key === "Escape")
       cleanup();
+    if (e.key === "h") {
+      hardMode = true;
+    }
   }
   function handleKeyUp(e) {
     if (e.key === "ArrowUp")
@@ -1455,14 +1459,62 @@ function startPong() {
       resetBall();
     } else if (ballX > canvas.width) {
       playerScore++;
-      addXp(10);
+      addXp(hardMode ? 20 : 10);
       resetBall();
     }
     draw();
   }
+  function drawTrajectory() {
+    ctx.strokeStyle = "rgba(195, 0, 255, 0.4)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    let simX = ballX + BALL_SIZE / 2;
+    let simY = ballY + BALL_SIZE / 2;
+    let simVX = ballSpeedX;
+    let simVY = ballSpeedY;
+    ctx.moveTo(simX, simY);
+    for (let i = 0;i < 20; i++) {
+      let timeX = Infinity;
+      let timeY = Infinity;
+      if (simVY < 0) {
+        timeY = (simY - BALL_SIZE / 2) / -simVY;
+      } else if (simVY > 0) {
+        timeY = (canvas.height - BALL_SIZE / 2 - simY) / simVY;
+      }
+      if (simVX < 0) {
+        const targetX = 10 + PADDLE_WIDTH + BALL_SIZE / 2;
+        if (simX <= targetX)
+          break;
+        timeX = (simX - targetX) / -simVX;
+      } else if (simVX > 0) {
+        const targetX = canvas.width - PADDLE_WIDTH - 10 - BALL_SIZE / 2;
+        if (simX >= targetX)
+          break;
+        timeX = (targetX - simX) / simVX;
+      }
+      const dt = Math.min(timeX, timeY);
+      if (dt === Infinity || dt < 0)
+        break;
+      simX += simVX * dt;
+      simY += simVY * dt;
+      ctx.lineTo(simX, simY);
+      if (timeX <= timeY) {
+        break;
+      } else {
+        simVY = -simVY;
+      }
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+  }
   function draw() {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!hardMode) {
+      drawTrajectory();
+    }
     ctx.strokeStyle = "#444";
     ctx.setLineDash([10, 15]);
     ctx.beginPath();
@@ -1478,7 +1530,7 @@ function startPong() {
     ctx.fillText(playerScore.toString(), canvas.width / 4, 50);
     ctx.fillText(aiScore.toString(), canvas.width * 3 / 4, 50);
     ctx.font = "16px monospace";
-    const msg = "Arrow Up/Down to move | Esc to exit";
+    const msg = `Arrow Up/Down: move | Esc: exit | H: Hard Mode (${hardMode ? "ON" : "OFF"})`;
     const metrics = ctx.measureText(msg);
     ctx.fillText(msg, canvas.width / 2 - metrics.width / 2, canvas.height - 20);
   }
@@ -1497,7 +1549,9 @@ function startPong() {
     inputLine.style.display = originalInputLineDisplay;
     input.focus();
     print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
-    const xp = playerScore * 5 - aiScore;
+    let xp = playerScore * 5 - aiScore;
+    if (hardMode)
+      xp *= 2;
     print(`You earned ${xp} XP!`);
     addXp(xp);
     if (playerScore >= 10) {
