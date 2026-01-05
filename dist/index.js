@@ -93,6 +93,163 @@ function delay(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
 
+// node_modules/@wxn0brp/flanker-ui/dist/store.js
+var storeKeys = ["listeners", "value", "notify", "get", "set", "subscribe", "parent", "isStore"];
+function createStore(schema, parent) {
+  const store = {};
+  for (const key in schema) {
+    if (schema.hasOwnProperty(key)) {
+      const isStore = typeof schema[key] === "object" && !Array.isArray(schema[key]) && schema[key] !== null;
+      if (isStore) {
+        store[key] = createStore(schema[key], store);
+      } else {
+        store[key] = new ReactiveCell(schema[key], store);
+      }
+    }
+  }
+  store.isStore = true;
+  store.listeners = [];
+  store.value = undefined;
+  store.parent = parent;
+  store.notify = (propagate = 0) => {
+    store.listeners.forEach((listener) => listener(store));
+    if (propagate > 0 && parent && typeof parent.notify === "function") {
+      parent.notify(propagate - 1);
+    }
+    return store;
+  };
+  store.get = () => {
+    const obj = {};
+    for (const key in store) {
+      if (storeKeys.includes(key))
+        continue;
+      if (store.hasOwnProperty(key)) {
+        obj[key] = store[key].get();
+      }
+    }
+    return obj;
+  };
+  store.getPointer = () => {
+    const obj = {};
+    for (const key in store) {
+      if (storeKeys.includes(key))
+        continue;
+      if (store.hasOwnProperty(key)) {
+        obj[key] = store[key];
+      }
+    }
+    return obj;
+  };
+  store.set = (data, propagate = 0) => {
+    for (const key in data) {
+      if (storeKeys.includes(key)) {
+        throw new Error(`Reserved key: ${key}`);
+      }
+      if (!store.hasOwnProperty(key)) {
+        throw new Error(`Unknown key: ${key}`);
+      }
+      const target = store[key];
+      if (target.isStore) {
+        throw new Error(`Cannot set nested store: ${key}`);
+      }
+      const value = data[key];
+      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        throw new Error(`Invalid value for key: ${key}`);
+      }
+    }
+    for (const key in data) {
+      store[key].set(data[key], propagate);
+    }
+    return store;
+  };
+  store.subscribe = (listener) => {
+    store.listeners.push(listener);
+    return store;
+  };
+  return store;
+}
+class ReactiveCell {
+  value;
+  parent;
+  listeners = [];
+  isStore = false;
+  constructor(value, parent) {
+    this.value = value;
+    this.parent = parent;
+  }
+  get() {
+    return this.value;
+  }
+  set(newVal, propagation = 0) {
+    this.value = newVal;
+    this.notify(propagation);
+    return this;
+  }
+  notify(propagation = 0) {
+    this.listeners.forEach((listener) => listener(this.value));
+    if (propagation > 0 && this.parent && typeof this.parent.notify === "function") {
+      this.parent.notify(propagation - 1);
+    }
+    return this;
+  }
+  subscribe(listener) {
+    this.listeners.push(listener);
+    return this;
+  }
+}
+// node_modules/@wxn0brp/flanker-ui/dist/component/index.js
+var fetchVQL = window?.VQLClient?.fetchVQL;
+// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
+function incrementCell(cell, by = 1) {
+  cell.set(cell.get() + by);
+  return cell;
+}
+function decrementCell(cell, by = 1) {
+  cell.set(cell.get() - by);
+  return cell;
+}
+
+// node_modules/@wxn0brp/flanker-ui/dist/index.js
+globalThis.lo = console.log;
+
+// src/vars.ts
+var links = [
+  { level: 1, name: "Homepage/Developer Website", url: "https://wxn0brp.github.io", displayed: false },
+  { level: 2, name: "GitHub Profile", url: "https://github.com/wxn0brP", displayed: false },
+  { level: 3, name: "ValtheraDB", url: "https://github.com/wxn0brP/ValtheraDB", displayed: false },
+  { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", displayed: false }
+];
+var $store = createStore({
+  xp: 0,
+  level: 0,
+  achievements: [],
+  credits: 0,
+  xpMultiplier: 1
+});
+function getXpToNextLevel(level) {
+  return 100 + level * 50;
+}
+var targets = [
+  "corporate-mainframe-j7",
+  "government-server-omega",
+  "bank-of-world-main",
+  "crypto-exchange-alpha",
+  "research-lab-gamma"
+];
+var vulnerabilities = [
+  { name: "buffer overflow", command: "exploit buffer_overflow" },
+  { name: "SQL injection", command: "exploit sql_injection" },
+  { name: "cross-site scripting", command: "exploit xss" },
+  { name: "rootkit", command: "install rootkit" },
+  { name: "zero-day", command: "deploy zero_day" }
+];
+var hackingMission = {
+  active: false,
+  target: null,
+  vulnerability: null,
+  command: null
+};
+
 // src/ui.ts
 var terminal = document.getElementById("terminal");
 var output = document.getElementById("output");
@@ -115,6 +272,542 @@ function printCommand(command) {
 }
 function clear() {
   output.innerHTML = "";
+}
+
+// src/save.ts
+function saveGame() {
+  const gameState = {
+    xp: $store.xp.get(),
+    level: $store.level.get(),
+    achievements: $store.achievements.get(),
+    credits: $store.credits.get(),
+    xpMultiplier: $store.xpMultiplier.get()
+  };
+  localStorage.setItem("gameState", JSON.stringify(gameState));
+}
+function loadGame() {
+  const savedState = localStorage.getItem("gameState");
+  if (savedState) {
+    const gameState = JSON.parse(savedState);
+    $store.xp.set(gameState.xp || 0);
+    $store.level.set(gameState.level || 0);
+    $store.achievements.set(gameState.achievements || []);
+    $store.credits.set(gameState.credits || 0);
+    $store.xpMultiplier.set(gameState.xpMultiplier || 1);
+    links.forEach((link) => link.displayed = link.level <= gameState.level);
+  }
+}
+function resetGame() {
+  localStorage.removeItem("gameState");
+  $store.level.set(0);
+  $store.xp.set(0);
+  $store.achievements.set([]);
+  $store.credits.set(0);
+  links.forEach((link) => link.displayed = false);
+  print("Game progress has been reset.", "system");
+}
+
+// src/game/progression.ts
+function checkUnlocks() {
+  const level = $store.level.get();
+  links.forEach((link) => {
+    if (link.displayed)
+      return;
+    const wasUnlocked = level >= link.level;
+    if (!wasUnlocked)
+      return;
+    link.displayed = true;
+    print(`\uD83C\uDF10 New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
+  });
+  saveGame();
+}
+// src/game/hacking.ts
+function failHack() {
+  print("Hack failed. Connection lost.", "error");
+  if (hackingMission.timer)
+    clearTimeout(hackingMission.timer);
+  hackingMission.active = false;
+}
+function tryHack(input2) {
+  if (!hackingMission.active)
+    return;
+  print("$ " + input2, "executed");
+  if (input2.toLowerCase() === hackingMission.command) {
+    const xpGained = Math.floor(Math.random() * 30) + 20;
+    const creditsGained = Math.floor(Math.random() * 30) + 20;
+    print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP, <span class="warning">${creditsGained}</span> Credits.`);
+    incrementCell($store.credits, creditsGained);
+    addXp(xpGained);
+    unlockAchievement("hacker");
+    achievementCounters.hackCount++;
+    if (achievementCounters.hackCount >= 10)
+      unlockAchievement("hacker_pro");
+    if (achievementCounters.hackCount >= 50)
+      unlockAchievement("elite_hacker");
+  } else {
+    print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
+    failHack();
+  }
+  if (hackingMission.timer) {
+    clearTimeout(hackingMission.timer);
+  }
+  hackingMission.active = false;
+}
+async function startHack() {
+  if (hackingMission.active) {
+    print("A hack is already in progress. Complete it or let it time out.", "system");
+    return;
+  }
+  hackingMission.active = true;
+  const target = targets[Math.floor(Math.random() * targets.length)];
+  const vulnerability = vulnerabilities[Math.floor(Math.random() * vulnerabilities.length)];
+  hackingMission.target = target;
+  hackingMission.vulnerability = vulnerability.name;
+  hackingMission.command = vulnerability.command;
+  print("Scanning for targets...", "system");
+  await delay(1000);
+  print(`Found target: <span class="dim">${target}</span>`, "system");
+  await delay(1000);
+  print("Analyzing vulnerabilities...", "system");
+  await delay(1000);
+  print(`Found vulnerability: <span class="dim">${vulnerability.name}</span>`, "system");
+  print(`To exploit, type: <span class="success">${vulnerability.command}</span>`);
+  hackingMission.timer = setTimeout(() => {
+    if (hackingMission.active) {
+      print("Timeout! Hack failed.", "error");
+      hackingMission.active = false;
+    }
+  }, 1e4);
+}
+// src/game/mining.ts
+var isBusy = false;
+async function startMining() {
+  if (isBusy || hackingMission.active) {
+    print("System is busy.", "error");
+    return;
+  }
+  isBusy = true;
+  input.disabled = true;
+  print("Initiating crypto-mining sequence...", "system");
+  await delay(1000);
+  print("Allocating resources... [CPU: 100%]", "dim");
+  await delay(1500);
+  print("Hashing block...", "dim");
+  await delay(2000);
+  const success = Math.random() > 0.3;
+  if (success) {
+    const xpGained = Math.floor(Math.random() * 15) + 5;
+    const creditsGained = Math.floor(Math.random() * 8) + 2;
+    print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
+    print(`Reward: <span class="success">${xpGained}</span> XP, <span class="warning">${creditsGained}</span> Credits`);
+    incrementCell($store.credits, creditsGained);
+    addXp(xpGained);
+    achievementCounters.mineCount++;
+    unlockAchievement("miner");
+    if (achievementCounters.mineCount >= 20)
+      unlockAchievement("mining_tycoon");
+  } else {
+    print("Mining failed. Invalid share.", "error");
+  }
+  input.disabled = false;
+  isBusy = false;
+  input.focus();
+}
+// src/start.ts
+async function startParams() {
+  const params = new URLSearchParams(location.search);
+  const i = params.get("i");
+  if (!i)
+    return;
+  window.history.replaceState(null, "", "/");
+  const instructions = i.replaceAll(",", " ").split(";");
+  for (const instruction of instructions) {
+    if (instruction === "")
+      continue;
+    if (instruction.split(" ")[0] === "sleep") {
+      await delay(+instruction.split(" ")[1]);
+      continue;
+    }
+    await delay(1000);
+    handleCommand(instruction);
+  }
+}
+function reloadWithParams(commands) {
+  commands = commands.map((cmd) => cmd.replaceAll(" ", ","));
+  location.href = "/?i=" + commands.join(";");
+}
+
+// src/game/destruction.ts
+async function systemDestroy() {
+  input.disabled = true;
+  print("WARNING: You are about to delete the entire filesystem.", "error");
+  print("This action cannot be undone.", "error");
+  await delay(2000);
+  print("Initiating deletion sequence...", "system");
+  await delay(1000);
+  const dirs = ["/home/guest", "/var/log", "/usr/bin", "/etc", "/tmp", "/usr/share/locale/fr"];
+  for (const dir of dirs) {
+    print(`Deleting ${dir}... [OK]`, "dim");
+    await delay(300);
+  }
+  await delay(500);
+  print("Deleting /boot... [FATAL ERROR]", "error");
+  await delay(1000);
+  print("KERNEL PANIC: SYSTEM HALTED", "error");
+  await delay(1000);
+  document.body.style.backgroundColor = "#0078d7";
+  document.body.style.color = "#ffffff";
+  document.body.style.fontFamily = "'Segoe UI', sans-serif";
+  document.body.innerHTML = `
+        <div style="padding: 10% 20%; font-size: 1.5rem;">
+            <p style="font-size: 8rem; margin: 0;">:(</p>
+            <p style="margin-top: 2rem;">Your device ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</p>
+            <p id="bsod-status" style="margin-top: 2rem;">0% complete</p>
+            <p style="font-size: 1rem; margin-top: 2rem; opacity: 0.8;">Stop key: CRITICAL_PROCESS_DIED</p>
+        </div>
+    `;
+  const funnyMessages = [
+    "Analyzing emotional damage...",
+    "Deleting System32 (wait, this is Linux)...",
+    "Converting Windows BSOD to Linux Kernel Panic...",
+    "Installing Gentoo (Component 1 of 4096)...",
+    "Compiling physics engine...",
+    "Questioning life choices...",
+    "Cleaning up broken dreams...",
+    "Rebooting into reality..."
+  ];
+  const statusEl = qs("#bsod-status");
+  for (let i = 0;i < funnyMessages.length; i++) {
+    await delay(800 + Math.random() * 1000);
+    statusEl.textContent = `${Math.floor(i / funnyMessages.length * 100)}% complete - ${funnyMessages[i]}`;
+  }
+  await delay(1000);
+  statusEl.textContent = "100% complete - Restarting...";
+  await delay(1000);
+  $store.level.set(0);
+  saveGame();
+  reloadWithParams([
+    "echo 'System was corrupted. Save data destroyed. Starting from a clean state.'"
+  ]);
+}
+// src/game/status.ts
+function showStatus() {
+  print(`Level: <span class="success">${$store.level.get()}</span>`);
+  print(`XP: <span class="success">${$store.xp.get()}/${getXpToNextLevel($store.level.get())}</span>`);
+  print(`Credits: <span class="warning">${$store.credits.get()}</span>`);
+  print(`XP Multiplier: <span class="dim">${$store.xpMultiplier.get()}x</span>`);
+}
+function showLinks() {
+  print("Unlocked links:");
+  const level = $store.level.get();
+  const unlockedLinks = links.filter((l) => l.level <= level);
+  if (unlockedLinks.length === 0) {
+    print("  No links unlocked yet. Keep hacking!", "dim");
+  } else {
+    unlockedLinks.forEach((l) => {
+      print(`  <a href="${l.url}" target="_blank">${l.name}</a> - Level ${l.level}`);
+    });
+  }
+}
+// src/game/welcome.ts
+async function welcome() {
+  input.disabled = true;
+  print("CONNECTION ESTABLISHED.", "success");
+  await delay(600);
+  print("CRITICAL: SYSTEM BREACH DETECTED...", "error");
+  await delay(800);
+  print("BYPASSING SECURITY PROTOCOLS...", "system");
+  await delay(1200);
+  print("ACCESS GRANTED.", "success");
+  await delay(500);
+  print("----------------------------------------", "dim");
+  print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
+  print("Kernel v2.0.4-build.99 loaded.");
+  print("System Shell v0.0.7 loaded.");
+  print("----------------------------------------", "dim");
+  await delay(300);
+  print("Type '<span class='success'>help</span>' to list available commands.");
+  input.disabled = false;
+}
+// src/game/vim.ts
+var vimActive = false;
+function openVim() {
+  if (vimActive)
+    return;
+  vimActive = true;
+  input.blur();
+  const originalDisplay = output.style.display;
+  const inputLine = document.getElementById("input-line");
+  const originalInputDisplay = inputLine.style.display;
+  output.style.display = "none";
+  inputLine.style.display = "none";
+  const vim = document.createElement("div");
+  vim.style.height = "100vh";
+  vim.style.backgroundColor = "#111";
+  vim.style.color = "#ccc";
+  vim.style.fontFamily = "monospace";
+  vim.style.display = "flex";
+  vim.style.flexDirection = "column";
+  vim.style.padding = "5px";
+  vim.style.zIndex = "1000";
+  vim.style.position = "fixed";
+  vim.style.top = "0";
+  vim.style.left = "0";
+  vim.style.width = "100%";
+  vim.innerHTML = `
+        <div style="flex: 1; white-space: pre-wrap; color: #4488ff;">~
+~
+~
+~       VIM - Vi IMproved
+~
+~       version 9.0.1234
+~       by Bram Moolenaar et al.
+~       Vim is open source and freely distributable
+~
+~       You seem to be stuck in vim.
+~       If you don't know how to exit, and you're not a superhuman,
+~       you may need to restart the session.
+~
+~       For real pros: mash keys to prove you're not a bot.
+~
+~
+~
+~
+~
+~
+</div>
+        <div id="vim-status" style="background: #333; color: white; padding: 2px;">[No Name]                                                                                                        0,0-1          All</div>
+        <div id="vim-cmd" style="height: 20px;"></div>
+    `;
+  document.body.appendChild(vim);
+  let keyPresses = 0;
+  let firstKeyPressTime = 0;
+  const closeVim = () => {
+    vim.remove();
+    output.style.display = originalDisplay;
+    inputLine.style.display = originalInputDisplay;
+    window.removeEventListener("keydown", handleKey);
+    vimActive = false;
+    input.focus();
+    unlockAchievement("vim_survivor");
+  };
+  const handleKey = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (firstKeyPressTime === 0) {
+      firstKeyPressTime = Date.now();
+    }
+    keyPresses++;
+    const timeDiff = Date.now() - firstKeyPressTime;
+    if (timeDiff > 1000) {
+      keyPresses = 0;
+      firstKeyPressTime = 0;
+    }
+    if (keyPresses > 10 && timeDiff < 1000) {
+      closeVim();
+    }
+  };
+  window.addEventListener("keydown", handleKey);
+  unlockAchievement("vim_brave");
+}
+// src/game/store.ts
+var items = [
+  {
+    id: "cpu_overclock",
+    name: "CPU Overclock",
+    description: "Increase XP gain multiplier by +0.5x",
+    cost: 200,
+    buy: () => {
+      incrementCell($store.xpMultiplier, 0.5);
+      print("Successfully overclocked CPU! XP gain increased.", "success");
+    }
+  },
+  {
+    id: "ram_expansion",
+    name: "RAM Expansion",
+    description: "Increase XP gain multiplier by +1.0x",
+    cost: 500,
+    buy: () => {
+      incrementCell($store.xpMultiplier, 1);
+      print("RAM Expansion installed! System running faster.", "success");
+    }
+  },
+  {
+    id: "quantum_core",
+    name: "Quantum Core",
+    description: "Increase XP gain multiplier by +2.0x",
+    cost: 1000,
+    buy: () => {
+      incrementCell($store.xpMultiplier, 2);
+      print("Quantum Core online. Processing power limit broken.", "success");
+    }
+  }
+];
+function startShop(args = "") {
+  if ($store.level.get() < 5) {
+    print("Access Denied: Dark Market requires Level 5 security clearance.", "error");
+    return;
+  }
+  const command = args.trim().split(" ");
+  if (command[0] === "buy") {
+    const itemId = command[1];
+    if (!itemId) {
+      print("Usage: shop buy <item_id>", "warning");
+      return;
+    }
+    const item = items.find((i) => i.id === itemId);
+    if (!item) {
+      print(`Item '${itemId}' not found in catalog.`, "error");
+      return;
+    }
+    const credits = $store.credits.get();
+    if (credits < item.cost) {
+      print(`Insufficient funds. You have <span class="warning">${credits}</span> credits, but item costs <span class="error">${item.cost}</span>.`, "error");
+      return;
+    }
+    decrementCell($store.credits, item.cost);
+    item.buy();
+    saveGame();
+    return;
+  }
+  print("=== DARK MARKET ===", "success");
+  print(`Credits Available: <span class="warning">${$store.credits.get()}</span>`);
+  print(`Current XP Multiplier: <span class="success">${$store.xpMultiplier.get()}x</span><br>`);
+  print("Available Upgrades:");
+  items.forEach((item) => {
+    print(`<span class="success">${item.id}</span> - ${item.name}`);
+    print(`  ${item.description}`);
+    print(`  Cost: <span class="warning">${item.cost}</span> Credits`);
+  });
+  print("<br>Usage: shop buy <item_id>", "dim");
+}
+// src/xp.ts
+function addXp(xp) {
+  const multiplier = $store.xpMultiplier.get();
+  const totalXp = Math.floor(xp * multiplier);
+  incrementCell($store.xp, totalXp);
+  while (true) {
+    const currentLevel = $store.level.get();
+    const required = getXpToNextLevel(currentLevel);
+    if ($store.xp.get() >= required) {
+      decrementCell($store.xp, required);
+      incrementCell($store.level, 1);
+      const newLevel = $store.level.get();
+      print(`⬆️ Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
+      print(`Check 'help' for new commands!`, "system");
+      checkUnlocks();
+      checkLevelAchievements(newLevel);
+    } else {
+      break;
+    }
+  }
+  saveGame();
+}
+
+// src/achievements.ts
+var achievements = [
+  { id: "first_steps", name: "First Steps", description: "Run your first command.", xp: 10, order: 1 },
+  { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20, order: 2 },
+  { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50, order: 3 },
+  { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25, order: 4 },
+  { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, order: 5, requiredLevel: 1 },
+  { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, order: 6, requiredLevel: 1 },
+  { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, order: 7, requiredLevel: 1 },
+  { id: "explorer", name: "Explorer", description: "List directory contents.", xp: 20, order: 8, requiredLevel: 2 },
+  { id: "navigator", name: "Navigator", description: "Change directory 5 times.", xp: 25, order: 9, requiredLevel: 2 },
+  { id: "reader", name: "Reader", description: "Read a file with cat.", xp: 20, order: 10, requiredLevel: 2 },
+  { id: "snake_player", name: "Snake Charmer", description: "Play Snake.", xp: 30, order: 11, requiredLevel: 3 },
+  { id: "snake_master", name: "Snake Master", description: "Score 20+ in Snake.", xp: 100, order: 12, requiredLevel: 3 },
+  { id: "vim_brave", name: "Brave Soul", description: "Enter vim (congratulations on your courage or your stupidity).", xp: 25, order: 13, requiredLevel: 3 },
+  { id: "vim_survivor", name: "Vim Survivor", description: "Exit vim (congratulations on your persistence).", xp: 50, order: 14, requiredLevel: 3 },
+  { id: "pong_player", name: "Pong Rookie", description: "Play Pong.", xp: 30, order: 15, requiredLevel: 4 },
+  { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, order: 16, requiredLevel: 4 },
+  { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, order: 17, requiredLevel: 5 },
+  { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, order: 18, requiredLevel: 5 },
+  { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100, order: 19 },
+  { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250, order: 20 },
+  { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, order: 21, requiredLevel: 1 },
+  { id: "level_5", name: "Rising Star", description: "Reach level 5.", xp: 50, order: 22 },
+  { id: "level_10", name: "Veteran", description: "Reach level 10.", xp: 100, order: 23 },
+  { id: "level_20", name: "Master", description: "Reach level 20.", xp: 200, order: 24 },
+  { id: "hello_world", name: "Friendly", description: "Say hello to the system.", xp: 15, hidden: true, order: 100 },
+  { id: "curious", name: "Polite Hacker", description: "Ask nicely for a sandwich.", xp: 30, hidden: true, order: 102 },
+  { id: "god_mode", name: "God Mode", description: "Unlock unlimited power.", xp: 100, hidden: true, order: 103 },
+  { id: "escape_artist", name: "Escape Artist", description: "Try to exit 5 times.", xp: 40, hidden: true, order: 104 },
+  { id: "destructor", name: "Destructor", description: "Try to delete system files.", xp: 50, hidden: true, order: 105 },
+  { id: "echo_chamber", name: "Echo Chamber", description: "Use echo 10 times.", xp: 30, hidden: true, order: 106, requiredLevel: 1 },
+  { id: "persistent", name: "Persistent", description: "Try the same failed command 3 times in a row.", xp: 25, hidden: true, order: 107 },
+  { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true, order: 108 },
+  { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true, order: 112 },
+  { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, order: 113, requiredLevel: 3 },
+  { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true, order: 200 }
+];
+var achievementCounters = {
+  cdCount: 0,
+  hackCount: 0,
+  mineCount: 0,
+  exitCount: 0,
+  echoCount: 0,
+  clearCount: 0,
+  coinflipCount: 0,
+  lastFailedCommand: "",
+  failedCommandCount: 0
+};
+function unlockAchievement(id) {
+  const unlocked = $store.achievements.get();
+  if (unlocked.includes(id))
+    return;
+  const achievement = achievements.find((a) => a.id === id);
+  if (!achievement)
+    return;
+  $store.achievements.set([...unlocked, id]);
+  addXp(achievement.xp);
+  print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
+  print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
+  checkCompletionist();
+}
+function checkCompletionist() {
+  const unlocked = $store.achievements.get();
+  const nonHidden = achievements.filter((a) => !a.hidden);
+  const allNonHiddenUnlocked = nonHidden.every((a) => unlocked.includes(a.id));
+  if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
+    unlockAchievement("completionist");
+  }
+}
+function checkLevelAchievements(level) {
+  if (level >= 5)
+    unlockAchievement("level_5");
+  if (level >= 10)
+    unlockAchievement("level_10");
+  if (level >= 20)
+    unlockAchievement("level_20");
+}
+function getAchievementProgress() {
+  const unlocked = $store.achievements.get();
+  const total = achievements.length;
+  return `${unlocked.length}/${total}`;
+}
+function getVisibleAchievements() {
+  const unlocked = $store.achievements.get();
+  const currentLevel = $store.level.get();
+  const sorted = [...achievements].sort((a, b) => a.order - b.order);
+  const visible = [];
+  let nextCount = 0;
+  for (const achievement of sorted) {
+    const isUnlocked = unlocked.includes(achievement.id);
+    const levelLocked = achievement.requiredLevel !== undefined && currentLevel < achievement.requiredLevel;
+    if (isUnlocked) {
+      visible.push({ ...achievement, unlocked: true });
+    } else if (achievement.hidden) {
+      continue;
+    } else if (levelLocked) {
+      continue;
+    } else if (nextCount < 5 && (achievement.requiredLevel === undefined || achievement.requiredLevel <= currentLevel)) {
+      visible.push({ ...achievement, unlocked: false });
+      nextCount++;
+    }
+  }
+  return visible;
 }
 
 // src/filesystem.ts
@@ -298,616 +991,6 @@ class VirtualFileSystem {
 }
 var fileSystem = new VirtualFileSystem;
 
-// node_modules/@wxn0brp/flanker-ui/dist/store.js
-var storeKeys = ["listeners", "value", "notify", "get", "set", "subscribe", "parent", "isStore"];
-function createStore(schema, parent) {
-  const store = {};
-  for (const key in schema) {
-    if (schema.hasOwnProperty(key)) {
-      const isStore = typeof schema[key] === "object" && !Array.isArray(schema[key]) && schema[key] !== null;
-      if (isStore) {
-        store[key] = createStore(schema[key], store);
-      } else {
-        store[key] = new ReactiveCell(schema[key], store);
-      }
-    }
-  }
-  store.isStore = true;
-  store.listeners = [];
-  store.value = undefined;
-  store.parent = parent;
-  store.notify = (propagate = 0) => {
-    store.listeners.forEach((listener) => listener(store));
-    if (propagate > 0 && parent && typeof parent.notify === "function") {
-      parent.notify(propagate - 1);
-    }
-    return store;
-  };
-  store.get = () => {
-    const obj = {};
-    for (const key in store) {
-      if (storeKeys.includes(key))
-        continue;
-      if (store.hasOwnProperty(key)) {
-        obj[key] = store[key].get();
-      }
-    }
-    return obj;
-  };
-  store.getPointer = () => {
-    const obj = {};
-    for (const key in store) {
-      if (storeKeys.includes(key))
-        continue;
-      if (store.hasOwnProperty(key)) {
-        obj[key] = store[key];
-      }
-    }
-    return obj;
-  };
-  store.set = (data, propagate = 0) => {
-    for (const key in data) {
-      if (storeKeys.includes(key)) {
-        throw new Error(`Reserved key: ${key}`);
-      }
-      if (!store.hasOwnProperty(key)) {
-        throw new Error(`Unknown key: ${key}`);
-      }
-      const target = store[key];
-      if (target.isStore) {
-        throw new Error(`Cannot set nested store: ${key}`);
-      }
-      const value = data[key];
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-        throw new Error(`Invalid value for key: ${key}`);
-      }
-    }
-    for (const key in data) {
-      store[key].set(data[key], propagate);
-    }
-    return store;
-  };
-  store.subscribe = (listener) => {
-    store.listeners.push(listener);
-    return store;
-  };
-  return store;
-}
-class ReactiveCell {
-  value;
-  parent;
-  listeners = [];
-  isStore = false;
-  constructor(value, parent) {
-    this.value = value;
-    this.parent = parent;
-  }
-  get() {
-    return this.value;
-  }
-  set(newVal, propagation = 0) {
-    this.value = newVal;
-    this.notify(propagation);
-    return this;
-  }
-  notify(propagation = 0) {
-    this.listeners.forEach((listener) => listener(this.value));
-    if (propagation > 0 && this.parent && typeof this.parent.notify === "function") {
-      this.parent.notify(propagation - 1);
-    }
-    return this;
-  }
-  subscribe(listener) {
-    this.listeners.push(listener);
-    return this;
-  }
-}
-// node_modules/@wxn0brp/flanker-ui/dist/component/index.js
-var fetchVQL = window?.VQLClient?.fetchVQL;
-// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
-function incrementCell(cell, by = 1) {
-  cell.set(cell.get() + by);
-  return cell;
-}
-function decrementCell(cell, by = 1) {
-  cell.set(cell.get() - by);
-  return cell;
-}
-
-// node_modules/@wxn0brp/flanker-ui/dist/index.js
-globalThis.lo = console.log;
-
-// src/vars.ts
-var links = [
-  { level: 1, name: "Homepage/Developer Website", url: "https://wxn0brp.github.io", displayed: false },
-  { level: 2, name: "GitHub Profile", url: "https://github.com/wxn0brP", displayed: false },
-  { level: 3, name: "ValtheraDB", url: "https://github.com/wxn0brP/ValtheraDB", displayed: false },
-  { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", displayed: false }
-];
-var $store = createStore({
-  xp: 0,
-  level: 0,
-  achievements: []
-});
-function getXpToNextLevel(level) {
-  return 100 + level * 50;
-}
-var targets = [
-  "corporate-mainframe-j7",
-  "government-server-omega",
-  "bank-of-world-main",
-  "crypto-exchange-alpha",
-  "research-lab-gamma"
-];
-var vulnerabilities = [
-  { name: "buffer overflow", command: "exploit buffer_overflow" },
-  { name: "SQL injection", command: "exploit sql_injection" },
-  { name: "cross-site scripting", command: "exploit xss" },
-  { name: "rootkit", command: "install rootkit" },
-  { name: "zero-day", command: "deploy zero_day" }
-];
-var hackingMission = {
-  active: false,
-  target: null,
-  vulnerability: null,
-  command: null
-};
-
-// src/save.ts
-function saveGame() {
-  const gameState = {
-    xp: $store.xp.get(),
-    level: $store.level.get(),
-    achievements: $store.achievements.get()
-  };
-  localStorage.setItem("gameState", JSON.stringify(gameState));
-}
-function loadGame() {
-  const savedState = localStorage.getItem("gameState");
-  if (savedState) {
-    const gameState = JSON.parse(savedState);
-    $store.xp.set(gameState.xp);
-    $store.level.set(gameState.level);
-    if (gameState.achievements) {
-      $store.achievements.set(gameState.achievements);
-    }
-    links.forEach((link) => link.displayed = link.level <= gameState.level);
-  }
-}
-function resetGame() {
-  localStorage.removeItem("gameState");
-  $store.level.set(0);
-  $store.level.set(0);
-  $store.xp.set(0);
-  $store.achievements.set([]);
-  links.forEach((link) => link.displayed = false);
-  print("Game progress has been reset.", "system");
-}
-
-// src/game/progression.ts
-function checkUnlocks() {
-  const level = $store.level.get();
-  links.forEach((link) => {
-    if (link.displayed)
-      return;
-    const wasUnlocked = level >= link.level;
-    if (!wasUnlocked)
-      return;
-    link.displayed = true;
-    print(`\uD83C\uDF10 New link unlocked: <a href="${link.url}" target="_blank">${link.name}</a>`, "success");
-  });
-  saveGame();
-}
-// src/achievements.ts
-var achievements = [
-  { id: "first_steps", name: "First Steps", description: "Run your first command.", xp: 10, order: 1 },
-  { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20, order: 2 },
-  { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50, order: 3 },
-  { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25, order: 4 },
-  { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, order: 5, requiredLevel: 1 },
-  { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, order: 6, requiredLevel: 1 },
-  { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, order: 7, requiredLevel: 1 },
-  { id: "explorer", name: "Explorer", description: "List directory contents.", xp: 20, order: 8, requiredLevel: 2 },
-  { id: "navigator", name: "Navigator", description: "Change directory 5 times.", xp: 25, order: 9, requiredLevel: 2 },
-  { id: "reader", name: "Reader", description: "Read a file with cat.", xp: 20, order: 10, requiredLevel: 2 },
-  { id: "snake_player", name: "Snake Charmer", description: "Play Snake.", xp: 30, order: 11, requiredLevel: 3 },
-  { id: "snake_master", name: "Snake Master", description: "Score 20+ in Snake.", xp: 100, order: 12, requiredLevel: 3 },
-  { id: "vim_brave", name: "Brave Soul", description: "Enter vim (congratulations on your courage or your stupidity).", xp: 25, order: 13, requiredLevel: 3 },
-  { id: "vim_survivor", name: "Vim Survivor", description: "Exit vim (congratulations on your persistence).", xp: 50, order: 14, requiredLevel: 3 },
-  { id: "pong_player", name: "Pong Rookie", description: "Play Pong.", xp: 30, order: 15, requiredLevel: 4 },
-  { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, order: 16, requiredLevel: 4 },
-  { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, order: 17, requiredLevel: 5 },
-  { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, order: 18, requiredLevel: 5 },
-  { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100, order: 19 },
-  { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250, order: 20 },
-  { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, order: 21, requiredLevel: 1 },
-  { id: "level_5", name: "Rising Star", description: "Reach level 5.", xp: 50, order: 22 },
-  { id: "level_10", name: "Veteran", description: "Reach level 10.", xp: 100, order: 23 },
-  { id: "level_20", name: "Master", description: "Reach level 20.", xp: 200, order: 24 },
-  { id: "hello_world", name: "Friendly", description: "Say hello to the system.", xp: 15, hidden: true, order: 100 },
-  { id: "curious", name: "Polite Hacker", description: "Ask nicely for a sandwich.", xp: 30, hidden: true, order: 102 },
-  { id: "god_mode", name: "God Mode", description: "Unlock unlimited power.", xp: 100, hidden: true, order: 103 },
-  { id: "escape_artist", name: "Escape Artist", description: "Try to exit 5 times.", xp: 40, hidden: true, order: 104 },
-  { id: "destructor", name: "Destructor", description: "Try to delete system files.", xp: 50, hidden: true, order: 105 },
-  { id: "echo_chamber", name: "Echo Chamber", description: "Use echo 10 times.", xp: 30, hidden: true, order: 106, requiredLevel: 1 },
-  { id: "persistent", name: "Persistent", description: "Try the same failed command 3 times in a row.", xp: 25, hidden: true, order: 107 },
-  { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true, order: 108 },
-  { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true, order: 112 },
-  { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, order: 113, requiredLevel: 3 },
-  { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true, order: 200 }
-];
-var achievementCounters = {
-  cdCount: 0,
-  hackCount: 0,
-  mineCount: 0,
-  exitCount: 0,
-  echoCount: 0,
-  clearCount: 0,
-  coinflipCount: 0,
-  lastFailedCommand: "",
-  failedCommandCount: 0
-};
-function unlockAchievement(id) {
-  const unlocked = $store.achievements.get();
-  if (unlocked.includes(id))
-    return;
-  const achievement = achievements.find((a) => a.id === id);
-  if (!achievement)
-    return;
-  $store.achievements.set([...unlocked, id]);
-  addXp(achievement.xp);
-  print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
-  print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
-  checkCompletionist();
-}
-function checkCompletionist() {
-  const unlocked = $store.achievements.get();
-  const nonHidden = achievements.filter((a) => !a.hidden);
-  const allNonHiddenUnlocked = nonHidden.every((a) => unlocked.includes(a.id));
-  if (allNonHiddenUnlocked && !unlocked.includes("completionist")) {
-    unlockAchievement("completionist");
-  }
-}
-function checkLevelAchievements(level) {
-  if (level >= 5)
-    unlockAchievement("level_5");
-  if (level >= 10)
-    unlockAchievement("level_10");
-  if (level >= 20)
-    unlockAchievement("level_20");
-}
-function getAchievementProgress() {
-  const unlocked = $store.achievements.get();
-  const total = achievements.length;
-  return `${unlocked.length}/${total}`;
-}
-function getVisibleAchievements() {
-  const unlocked = $store.achievements.get();
-  const currentLevel = $store.level.get();
-  const sorted = [...achievements].sort((a, b) => a.order - b.order);
-  const visible = [];
-  let nextCount = 0;
-  for (const achievement of sorted) {
-    const isUnlocked = unlocked.includes(achievement.id);
-    const levelLocked = achievement.requiredLevel !== undefined && currentLevel < achievement.requiredLevel;
-    if (isUnlocked) {
-      visible.push({ ...achievement, unlocked: true });
-    } else if (achievement.hidden) {
-      continue;
-    } else if (levelLocked) {
-      continue;
-    } else if (nextCount < 5 && (achievement.requiredLevel === undefined || achievement.requiredLevel <= currentLevel)) {
-      visible.push({ ...achievement, unlocked: false });
-      nextCount++;
-    }
-  }
-  return visible;
-}
-
-// src/xp.ts
-function addXp(xp) {
-  incrementCell($store.xp, xp);
-  while (true) {
-    const currentLevel = $store.level.get();
-    const required = getXpToNextLevel(currentLevel);
-    if ($store.xp.get() >= required) {
-      decrementCell($store.xp, required);
-      incrementCell($store.level, 1);
-      const newLevel = $store.level.get();
-      print(`⬆️ Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
-      print(`Check 'help' for new commands!`, "system");
-      checkUnlocks();
-      checkLevelAchievements(newLevel);
-    } else {
-      break;
-    }
-  }
-  saveGame();
-}
-
-// src/game/hacking.ts
-function failHack() {
-  print("Hack failed. Connection lost.", "error");
-  if (hackingMission.timer)
-    clearTimeout(hackingMission.timer);
-  hackingMission.active = false;
-}
-function tryHack(input2) {
-  if (!hackingMission.active)
-    return;
-  print("$ " + input2, "executed");
-  if (input2.toLowerCase() === hackingMission.command) {
-    const xpGained = Math.floor(Math.random() * 30) + 20;
-    print(`Hacking... success! Gained <span class="success">${xpGained}</span> XP.`);
-    addXp(xpGained);
-    unlockAchievement("hacker");
-    achievementCounters.hackCount++;
-    if (achievementCounters.hackCount >= 10)
-      unlockAchievement("hacker_pro");
-    if (achievementCounters.hackCount >= 50)
-      unlockAchievement("elite_hacker");
-  } else {
-    print(`Incorrect command. Expected '<span class="system">${hackingMission.command}</span>'.`, "error");
-    failHack();
-  }
-  if (hackingMission.timer) {
-    clearTimeout(hackingMission.timer);
-  }
-  hackingMission.active = false;
-}
-async function startHack() {
-  if (hackingMission.active) {
-    print("A hack is already in progress. Complete it or let it time out.", "system");
-    return;
-  }
-  hackingMission.active = true;
-  const target = targets[Math.floor(Math.random() * targets.length)];
-  const vulnerability = vulnerabilities[Math.floor(Math.random() * vulnerabilities.length)];
-  hackingMission.target = target;
-  hackingMission.vulnerability = vulnerability.name;
-  hackingMission.command = vulnerability.command;
-  print("Scanning for targets...", "system");
-  await delay(1000);
-  print(`Found target: <span class="dim">${target}</span>`, "system");
-  await delay(1000);
-  print("Analyzing vulnerabilities...", "system");
-  await delay(1000);
-  print(`Found vulnerability: <span class="dim">${vulnerability.name}</span>`, "system");
-  print(`To exploit, type: <span class="success">${vulnerability.command}</span>`);
-  hackingMission.timer = setTimeout(() => {
-    if (hackingMission.active) {
-      print("Timeout! Hack failed.", "error");
-      hackingMission.active = false;
-    }
-  }, 1e4);
-}
-// src/game/mining.ts
-var isBusy = false;
-async function startMining() {
-  if (isBusy || hackingMission.active) {
-    print("System is busy.", "error");
-    return;
-  }
-  isBusy = true;
-  input.disabled = true;
-  print("Initiating crypto-mining sequence...", "system");
-  await delay(1000);
-  print("Allocating resources... [CPU: 100%]", "dim");
-  await delay(1500);
-  print("Hashing block...", "dim");
-  await delay(2000);
-  const success = Math.random() > 0.3;
-  if (success) {
-    const xpGained = Math.floor(Math.random() * 15) + 5;
-    print(`Block found! Hash: 0x${Math.random().toString(16).substring(2, 8)}`, "success");
-    print(`Reward: <span class="success">${xpGained}</span> XP`);
-    addXp(xpGained);
-    achievementCounters.mineCount++;
-    unlockAchievement("miner");
-    if (achievementCounters.mineCount >= 20)
-      unlockAchievement("mining_tycoon");
-  } else {
-    print("Mining failed. Invalid share.", "error");
-  }
-  input.disabled = false;
-  isBusy = false;
-  input.focus();
-}
-// src/start.ts
-async function startParams() {
-  const params = new URLSearchParams(location.search);
-  const i = params.get("i");
-  if (!i)
-    return;
-  window.history.replaceState(null, "", "/");
-  const instructions = i.replaceAll(",", " ").split(";");
-  for (const instruction of instructions) {
-    if (instruction === "")
-      continue;
-    if (instruction.split(" ")[0] === "sleep") {
-      await delay(+instruction.split(" ")[1]);
-      continue;
-    }
-    await delay(1000);
-    handleCommand(instruction);
-  }
-}
-function reloadWithParams(commands) {
-  commands = commands.map((cmd) => cmd.replaceAll(" ", ","));
-  location.href = "/?i=" + commands.join(";");
-}
-
-// src/game/destruction.ts
-async function systemDestroy() {
-  input.disabled = true;
-  print("WARNING: You are about to delete the entire filesystem.", "error");
-  print("This action cannot be undone.", "error");
-  await delay(2000);
-  print("Initiating deletion sequence...", "system");
-  await delay(1000);
-  const dirs = ["/home/guest", "/var/log", "/usr/bin", "/etc", "/tmp", "/usr/share/locale/fr"];
-  for (const dir of dirs) {
-    print(`Deleting ${dir}... [OK]`, "dim");
-    await delay(300);
-  }
-  await delay(500);
-  print("Deleting /boot... [FATAL ERROR]", "error");
-  await delay(1000);
-  print("KERNEL PANIC: SYSTEM HALTED", "error");
-  await delay(1000);
-  document.body.style.backgroundColor = "#0078d7";
-  document.body.style.color = "#ffffff";
-  document.body.style.fontFamily = "'Segoe UI', sans-serif";
-  document.body.innerHTML = `
-        <div style="padding: 10% 20%; font-size: 1.5rem;">
-            <p style="font-size: 8rem; margin: 0;">:(</p>
-            <p style="margin-top: 2rem;">Your device ran into a problem and needs to restart. We're just collecting some error info, and then we'll restart for you.</p>
-            <p id="bsod-status" style="margin-top: 2rem;">0% complete</p>
-            <p style="font-size: 1rem; margin-top: 2rem; opacity: 0.8;">Stop key: CRITICAL_PROCESS_DIED</p>
-        </div>
-    `;
-  const funnyMessages = [
-    "Analyzing emotional damage...",
-    "Deleting System32 (wait, this is Linux)...",
-    "Converting Windows BSOD to Linux Kernel Panic...",
-    "Installing Gentoo (Component 1 of 4096)...",
-    "Compiling physics engine...",
-    "Questioning life choices...",
-    "Cleaning up broken dreams...",
-    "Rebooting into reality..."
-  ];
-  const statusEl = qs("#bsod-status");
-  for (let i = 0;i < funnyMessages.length; i++) {
-    await delay(800 + Math.random() * 1000);
-    statusEl.textContent = `${Math.floor(i / funnyMessages.length * 100)}% complete - ${funnyMessages[i]}`;
-  }
-  await delay(1000);
-  statusEl.textContent = "100% complete - Restarting...";
-  await delay(1000);
-  $store.level.set(0);
-  saveGame();
-  reloadWithParams([
-    "echo 'System was corrupted. Save data destroyed. Starting from a clean state.'"
-  ]);
-}
-// src/game/status.ts
-function showStatus() {
-  print(`Level: <span class="success">${$store.level.get()}</span>`);
-  print(`XP: <span class="success">${$store.xp.get()}/${getXpToNextLevel($store.level.get())}</span>`);
-}
-function showLinks() {
-  print("Unlocked links:");
-  const level = $store.level.get();
-  const unlockedLinks = links.filter((l) => l.level <= level);
-  if (unlockedLinks.length === 0) {
-    print("  No links unlocked yet. Keep hacking!", "dim");
-  } else {
-    unlockedLinks.forEach((l) => {
-      print(`  <a href="${l.url}" target="_blank">${l.name}</a> - Level ${l.level}`);
-    });
-  }
-}
-// src/game/welcome.ts
-async function welcome() {
-  input.disabled = true;
-  print("CONNECTION ESTABLISHED.", "success");
-  await delay(600);
-  print("CRITICAL: SYSTEM BREACH DETECTED...", "error");
-  await delay(800);
-  print("BYPASSING SECURITY PROTOCOLS...", "system");
-  await delay(1200);
-  print("ACCESS GRANTED.", "success");
-  await delay(500);
-  print("----------------------------------------", "dim");
-  print("Welcome to <span class='system'>wxn0.xyz</span> Terminal Interface", "system");
-  print("Kernel v2.0.4-build.99 loaded.");
-  print("System Shell v0.0.7 loaded.");
-  print("----------------------------------------", "dim");
-  await delay(300);
-  print("Type '<span class='success'>help</span>' to list available commands.");
-  input.disabled = false;
-}
-// src/game/vim.ts
-var vimActive = false;
-function openVim() {
-  if (vimActive)
-    return;
-  vimActive = true;
-  input.blur();
-  const originalDisplay = output.style.display;
-  const inputLine = document.getElementById("input-line");
-  const originalInputDisplay = inputLine.style.display;
-  output.style.display = "none";
-  inputLine.style.display = "none";
-  const vim = document.createElement("div");
-  vim.style.height = "100vh";
-  vim.style.backgroundColor = "#111";
-  vim.style.color = "#ccc";
-  vim.style.fontFamily = "monospace";
-  vim.style.display = "flex";
-  vim.style.flexDirection = "column";
-  vim.style.padding = "5px";
-  vim.style.zIndex = "1000";
-  vim.style.position = "fixed";
-  vim.style.top = "0";
-  vim.style.left = "0";
-  vim.style.width = "100%";
-  vim.innerHTML = `
-        <div style="flex: 1; white-space: pre-wrap; color: #4488ff;">~
-~
-~
-~       VIM - Vi IMproved
-~
-~       version 9.0.1234
-~       by Bram Moolenaar et al.
-~       Vim is open source and freely distributable
-~
-~       You seem to be stuck in vim.
-~       If you don't know how to exit, and you're not a superhuman,
-~       you may need to restart the session.
-~
-~       For real pros: mash keys to prove you're not a bot.
-~
-~
-~
-~
-~
-~
-</div>
-        <div id="vim-status" style="background: #333; color: white; padding: 2px;">[No Name]                                                                                                        0,0-1          All</div>
-        <div id="vim-cmd" style="height: 20px;"></div>
-    `;
-  document.body.appendChild(vim);
-  let keyPresses = 0;
-  let firstKeyPressTime = 0;
-  const closeVim = () => {
-    vim.remove();
-    output.style.display = originalDisplay;
-    inputLine.style.display = originalInputDisplay;
-    window.removeEventListener("keydown", handleKey);
-    vimActive = false;
-    input.focus();
-    unlockAchievement("vim_survivor");
-  };
-  const handleKey = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (firstKeyPressTime === 0) {
-      firstKeyPressTime = Date.now();
-    }
-    keyPresses++;
-    const timeDiff = Date.now() - firstKeyPressTime;
-    if (timeDiff > 1000) {
-      keyPresses = 0;
-      firstKeyPressTime = 0;
-    }
-    if (keyPresses > 10 && timeDiff < 1000) {
-      closeVim();
-    }
-  };
-  window.addEventListener("keydown", handleKey);
-  unlockAchievement("vim_brave");
-}
 // src/game/cat.ts
 var codes = [
   0,
@@ -1007,6 +1090,162 @@ function cat(code) {
   });
   p.appendChild(img);
   output.appendChild(p);
+}
+
+// src/game/pong.ts
+function startPong() {
+  const originalOutputDisplay = output.style.display;
+  const inputLine = qs("#input-line");
+  const originalInputLineDisplay = inputLine.style.display;
+  output.style.display = "none";
+  inputLine.style.display = "none";
+  input.blur();
+  const canvas = document.createElement("canvas");
+  canvas.id = "pong-canvas";
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.zIndex = "2000";
+  canvas.style.backgroundColor = "#000";
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    alert("Canvas not supported!");
+    cleanup();
+    return;
+  }
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+  const PADDLE_WIDTH = 10;
+  const PADDLE_HEIGHT = 150;
+  const BALL_SIZE = 10;
+  const PLAYER_SPEED = 12;
+  const AI_SPEED = 8;
+  let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+  let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+  let ballX = canvas.width / 2;
+  let ballY = canvas.height / 2;
+  let ballSpeedX = 5;
+  let ballSpeedY = 5;
+  let playerScore = 0;
+  let aiScore = 0;
+  let gameLoopId;
+  const keys = {
+    ArrowUp: false,
+    ArrowDown: false
+  };
+  function handleKeyDown(e) {
+    if (e.key === "ArrowUp")
+      keys.ArrowUp = true;
+    if (e.key === "ArrowDown")
+      keys.ArrowDown = true;
+    if (e.key === "Escape")
+      cleanup();
+  }
+  function handleKeyUp(e) {
+    if (e.key === "ArrowUp")
+      keys.ArrowUp = false;
+    if (e.key === "ArrowDown")
+      keys.ArrowDown = false;
+  }
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
+  function resetBall() {
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+    ballSpeedX = -ballSpeedX;
+    ballSpeedY = (Math.random() - 0.5) * 10;
+  }
+  function update() {
+    if (keys.ArrowUp && playerY > 0)
+      playerY -= PLAYER_SPEED;
+    if (keys.ArrowDown && playerY < canvas.height - PADDLE_HEIGHT)
+      playerY += PLAYER_SPEED;
+    if (ballSpeedX > 0) {
+      const aiCenter = aiY + PADDLE_HEIGHT / 2;
+      if (aiCenter < ballY) {
+        aiY += AI_SPEED;
+      } else if (aiCenter > ballY) {
+        aiY -= AI_SPEED;
+      }
+    }
+    aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+    if (ballY < 0 || ballY > canvas.height - BALL_SIZE) {
+      ballSpeedY = -ballSpeedY;
+    }
+    if (ballX < PADDLE_WIDTH + 10 && ballX > 10 && ballY + BALL_SIZE > playerY && ballY < playerY + PADDLE_HEIGHT) {
+      ballSpeedX = -ballSpeedX;
+      const deltaY = ballY - (playerY + PADDLE_HEIGHT / 2);
+      ballSpeedY = deltaY * 0.35;
+      if (Math.abs(ballSpeedX) < 15) {
+        ballSpeedX *= 1.05;
+      }
+    }
+    if (ballX > canvas.width - PADDLE_WIDTH - 10 - BALL_SIZE && ballX < canvas.width - 10 && ballY + BALL_SIZE > aiY && ballY < aiY + PADDLE_HEIGHT) {
+      ballSpeedX = -ballSpeedX;
+      const deltaY = ballY - (aiY + PADDLE_HEIGHT / 2);
+      ballSpeedY = deltaY * 0.35;
+    }
+    if (ballX < 0) {
+      aiScore++;
+      resetBall();
+    } else if (ballX > canvas.width) {
+      playerScore++;
+      addXp(10);
+      resetBall();
+    }
+    draw();
+  }
+  function draw() {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#444";
+    ctx.setLineDash([10, 15]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(10, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(canvas.width - PADDLE_WIDTH - 10, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(ballX, ballY, BALL_SIZE, BALL_SIZE);
+    ctx.font = "40px monospace";
+    ctx.fillText(playerScore.toString(), canvas.width / 4, 50);
+    ctx.fillText(aiScore.toString(), canvas.width * 3 / 4, 50);
+    ctx.font = "16px monospace";
+    const msg = "Arrow Up/Down to move | Esc to exit";
+    const metrics = ctx.measureText(msg);
+    ctx.fillText(msg, canvas.width / 2 - metrics.width / 2, canvas.height - 20);
+  }
+  function loop() {
+    update();
+    gameLoopId = requestAnimationFrame(loop);
+  }
+  function cleanup() {
+    cancelAnimationFrame(gameLoopId);
+    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("keyup", handleKeyUp);
+    window.removeEventListener("resize", resizeCanvas);
+    if (canvas && canvas.parentNode)
+      canvas.parentNode.removeChild(canvas);
+    output.style.display = originalOutputDisplay;
+    inputLine.style.display = originalInputLineDisplay;
+    input.focus();
+    print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
+    const xp = playerScore * 5 - aiScore;
+    addXp(xp);
+    if (playerScore >= 10) {
+      unlockAchievement("pong_winner");
+    }
+  }
+  gameLoopId = requestAnimationFrame(loop);
 }
 
 // src/game/snake.ts
@@ -1208,162 +1447,6 @@ function startSnake() {
   draw();
 }
 
-// src/game/pong.ts
-function startPong() {
-  const originalOutputDisplay = output.style.display;
-  const inputLine = qs("#input-line");
-  const originalInputLineDisplay = inputLine.style.display;
-  output.style.display = "none";
-  inputLine.style.display = "none";
-  input.blur();
-  const canvas = document.createElement("canvas");
-  canvas.id = "pong-canvas";
-  canvas.style.position = "fixed";
-  canvas.style.top = "0";
-  canvas.style.left = "0";
-  canvas.style.zIndex = "2000";
-  canvas.style.backgroundColor = "#000";
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    alert("Canvas not supported!");
-    cleanup();
-    return;
-  }
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-  const PADDLE_WIDTH = 10;
-  const PADDLE_HEIGHT = 150;
-  const BALL_SIZE = 10;
-  const PLAYER_SPEED = 12;
-  const AI_SPEED = 8;
-  let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
-  let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
-  let ballX = canvas.width / 2;
-  let ballY = canvas.height / 2;
-  let ballSpeedX = 5;
-  let ballSpeedY = 5;
-  let playerScore = 0;
-  let aiScore = 0;
-  let gameLoopId;
-  const keys = {
-    ArrowUp: false,
-    ArrowDown: false
-  };
-  function handleKeyDown(e) {
-    if (e.key === "ArrowUp")
-      keys.ArrowUp = true;
-    if (e.key === "ArrowDown")
-      keys.ArrowDown = true;
-    if (e.key === "Escape")
-      cleanup();
-  }
-  function handleKeyUp(e) {
-    if (e.key === "ArrowUp")
-      keys.ArrowUp = false;
-    if (e.key === "ArrowDown")
-      keys.ArrowDown = false;
-  }
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
-  function resetBall() {
-    ballX = canvas.width / 2;
-    ballY = canvas.height / 2;
-    ballSpeedX = -ballSpeedX;
-    ballSpeedY = (Math.random() - 0.5) * 10;
-  }
-  function update() {
-    if (keys.ArrowUp && playerY > 0)
-      playerY -= PLAYER_SPEED;
-    if (keys.ArrowDown && playerY < canvas.height - PADDLE_HEIGHT)
-      playerY += PLAYER_SPEED;
-    if (ballSpeedX > 0) {
-      const aiCenter = aiY + PADDLE_HEIGHT / 2;
-      if (aiCenter < ballY) {
-        aiY += AI_SPEED;
-      } else if (aiCenter > ballY) {
-        aiY -= AI_SPEED;
-      }
-    }
-    aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
-    if (ballY < 0 || ballY > canvas.height - BALL_SIZE) {
-      ballSpeedY = -ballSpeedY;
-    }
-    if (ballX < PADDLE_WIDTH + 10 && ballX > 10 && ballY + BALL_SIZE > playerY && ballY < playerY + PADDLE_HEIGHT) {
-      ballSpeedX = -ballSpeedX;
-      const deltaY = ballY - (playerY + PADDLE_HEIGHT / 2);
-      ballSpeedY = deltaY * 0.35;
-      if (Math.abs(ballSpeedX) < 15) {
-        ballSpeedX *= 1.05;
-      }
-    }
-    if (ballX > canvas.width - PADDLE_WIDTH - 10 - BALL_SIZE && ballX < canvas.width - 10 && ballY + BALL_SIZE > aiY && ballY < aiY + PADDLE_HEIGHT) {
-      ballSpeedX = -ballSpeedX;
-      const deltaY = ballY - (aiY + PADDLE_HEIGHT / 2);
-      ballSpeedY = deltaY * 0.35;
-    }
-    if (ballX < 0) {
-      aiScore++;
-      resetBall();
-    } else if (ballX > canvas.width) {
-      playerScore++;
-      addXp(10);
-      resetBall();
-    }
-    draw();
-  }
-  function draw() {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#444";
-    ctx.setLineDash([10, 15]);
-    ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0);
-    ctx.lineTo(canvas.width / 2, canvas.height);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(10, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
-    ctx.fillRect(canvas.width - PADDLE_WIDTH - 10, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
-    ctx.fillRect(ballX, ballY, BALL_SIZE, BALL_SIZE);
-    ctx.font = "40px monospace";
-    ctx.fillText(playerScore.toString(), canvas.width / 4, 50);
-    ctx.fillText(aiScore.toString(), canvas.width * 3 / 4, 50);
-    ctx.font = "16px monospace";
-    const msg = "Arrow Up/Down to move | Esc to exit";
-    const metrics = ctx.measureText(msg);
-    ctx.fillText(msg, canvas.width / 2 - metrics.width / 2, canvas.height - 20);
-  }
-  function loop() {
-    update();
-    gameLoopId = requestAnimationFrame(loop);
-  }
-  function cleanup() {
-    cancelAnimationFrame(gameLoopId);
-    window.removeEventListener("keydown", handleKeyDown);
-    window.removeEventListener("keyup", handleKeyUp);
-    window.removeEventListener("resize", resizeCanvas);
-    if (canvas && canvas.parentNode)
-      canvas.parentNode.removeChild(canvas);
-    output.style.display = originalOutputDisplay;
-    inputLine.style.display = originalInputLineDisplay;
-    input.focus();
-    print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
-    const xp = playerScore * 5 - aiScore;
-    addXp(xp);
-    if (playerScore >= 10) {
-      unlockAchievement("pong_winner");
-    }
-  }
-  gameLoopId = requestAnimationFrame(loop);
-}
-
 // src/commands.ts
 var box = qs(".prompt");
 function printAvailable(name, description) {
@@ -1403,7 +1486,8 @@ var commandsList = [
   "pong",
   "source",
   "achievements",
-  "a"
+  "a",
+  "shop"
 ];
 function handleCommand(command) {
   if (!command.trim()) {
@@ -1452,9 +1536,14 @@ function handleCommand(command) {
       printAvailable("pong", "Play Pong (Earn XP!)");
       if (userLevel < 5)
         break;
+      printAvailable("shop", "Open the Dark Market (Buy upgrades)");
       printAvailable("reset", "Reset your game progress");
       printAvailable("coinflip", "Flip a coin");
       printAvailable("matrix", "Enter the Matrix");
+      break;
+    case "shop":
+    case "store":
+      startShop(fullArgs);
       break;
     case "status":
       showStatus();
