@@ -294,6 +294,7 @@ function resetGame() {
   $store.mails.set([]);
   $store.storyProgress.set(0);
   links.forEach((link) => link.displayed = false);
+  localStorage.removeItem("stats");
   print("Game progress has been reset.", "system");
 }
 
@@ -471,6 +472,8 @@ var achievements = [
   { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20 },
   { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50 },
   { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25 },
+  { id: "stats_check", name: "Stats Check", description: "Check your stats.", xp: 25 },
+  { id: "developer", name: "Be a developer", description: "See source code.", xp: 25 },
   { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, requiredLevel: 1 },
   { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, requiredLevel: 1 },
   { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, requiredLevel: 1 },
@@ -502,6 +505,13 @@ var achievements = [
   { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true },
   { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true },
   { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, requiredLevel: 3 },
+  {
+    id: "dev_plus_plus",
+    name: "Dev++",
+    xp: 5000,
+    hidden: true,
+    description: "You were never meant to earn this. You found it by reading the source code."
+  },
   { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true }
 ];
 var achievementCounters = {
@@ -875,118 +885,6 @@ class VirtualFileSystem {
 }
 var fileSystem = new VirtualFileSystem;
 
-// src/complete.ts
-function handleAutoComplete(cmd, split) {
-  if (["ls", "cd", "cat"].includes(cmd)) {
-    const files = fileSystem.getFilesAndDirs(fileSystem.getCWD());
-    const matchingFiles = files.filter((file) => file.startsWith(split[1]));
-    if (matchingFiles.length === 1) {
-      split[1] = matchingFiles[0];
-      input.value = split.join(" ");
-      moveCursorToEnd();
-    }
-  }
-}
-
-// src/input.ts
-var commandHistory = [];
-var historyIndex = -1;
-var moveCursorToEnd = debounce(() => {
-  input.setSelectionRange(input.value.length, input.value.length);
-}, 50);
-function setInputWidth() {
-  const width = input.value.length * 10 + 200;
-  input.style.width = Math.min(width, window.innerWidth - 20) + "px";
-}
-setTimeout(setInputWidth, 20);
-input.addEventListener("input", setInputWidth);
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    const command = input.value;
-    if (command) {
-      commandHistory.push(command);
-    }
-    historyIndex = commandHistory.length;
-    input.value = "";
-    handleCommand(command);
-  } else if (e.key === "ArrowUp") {
-    if (historyIndex > 0) {
-      historyIndex--;
-      input.value = commandHistory[historyIndex];
-      moveCursorToEnd();
-    }
-    setInputWidth();
-  } else if (e.key === "ArrowDown") {
-    if (historyIndex < commandHistory.length - 1) {
-      historyIndex++;
-      input.value = commandHistory[historyIndex];
-      moveCursorToEnd();
-    } else {
-      historyIndex = commandHistory.length;
-      input.value = "";
-    }
-    setInputWidth();
-  } else if (e.ctrlKey && e.key === "l") {
-    clear();
-    e.preventDefault();
-  } else if (e.key === "Tab") {
-    e.preventDefault();
-    const split = input.value.split(" ");
-    const cmd = split[0].toLowerCase();
-    if (split.length > 1) {
-      handleAutoComplete(cmd, split);
-    } else {
-      const matchingCommands = commandsList.filter((command) => command.startsWith(cmd));
-      if (matchingCommands.length === 1) {
-        split[0] = matchingCommands[0];
-        input.value = split.join(" ");
-        moveCursorToEnd();
-      }
-    }
-  }
-});
-window.addEventListener("keydown", (e) => {
-  if (document.activeElement !== input) {
-    if (e.target instanceof HTMLAnchorElement && (e.key === "Enter" || e.key === " ")) {
-      return;
-    }
-    input.focus();
-  }
-});
-function colorCommand() {
-  const cmd = input.value.split(" ")[0].toLowerCase();
-  input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
-}
-window.addEventListener("keyup", colorCommand);
-window.addEventListener("input", colorCommand);
-var konamiCode = [
-  "ArrowUp",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowLeft",
-  "ArrowRight",
-  "b",
-  "a"
-];
-var konamiIndex = 0;
-window.addEventListener("keydown", (e) => {
-  if (e.key === konamiCode[konamiIndex]) {
-    konamiIndex++;
-    if (konamiIndex === konamiCode.length) {
-      handleCommand("konami");
-      konamiIndex = 0;
-    }
-  } else {
-    konamiIndex = 0;
-  }
-});
-function resetDash() {
-  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
-}
-
 // src/commands/developer.ts
 function cmdXp(arg) {
   const num = +arg;
@@ -994,7 +892,7 @@ function cmdXp(arg) {
     return;
   if (num > 1e4) {
     print("You can't gain that much XP at once!", "error");
-    resetDash();
+    resetGame();
     saveGame();
     handleCommand("reset");
     handleCommand("sudo rm -rf /");
@@ -1108,6 +1006,118 @@ function cat(code) {
   });
   p.appendChild(img);
   output.appendChild(p);
+}
+
+// src/complete.ts
+function handleAutoComplete(cmd, split) {
+  if (["ls", "cd", "cat"].includes(cmd)) {
+    const files = fileSystem.getFilesAndDirs(fileSystem.getCWD());
+    const matchingFiles = files.filter((file) => file.startsWith(split[1]));
+    if (matchingFiles.length === 1) {
+      split[1] = matchingFiles[0];
+      input.value = split.join(" ");
+      moveCursorToEnd();
+    }
+  }
+}
+
+// src/input.ts
+var commandHistory = [];
+var historyIndex = -1;
+var moveCursorToEnd = debounce(() => {
+  input.setSelectionRange(input.value.length, input.value.length);
+}, 50);
+function setInputWidth() {
+  const width = input.value.length * 10 + 200;
+  input.style.width = Math.min(width, window.innerWidth - 20) + "px";
+}
+setTimeout(setInputWidth, 20);
+input.addEventListener("input", setInputWidth);
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const command = input.value;
+    if (command) {
+      commandHistory.push(command);
+    }
+    historyIndex = commandHistory.length;
+    input.value = "";
+    handleCommand(command);
+  } else if (e.key === "ArrowUp") {
+    if (historyIndex > 0) {
+      historyIndex--;
+      input.value = commandHistory[historyIndex];
+      moveCursorToEnd();
+    }
+    setInputWidth();
+  } else if (e.key === "ArrowDown") {
+    if (historyIndex < commandHistory.length - 1) {
+      historyIndex++;
+      input.value = commandHistory[historyIndex];
+      moveCursorToEnd();
+    } else {
+      historyIndex = commandHistory.length;
+      input.value = "";
+    }
+    setInputWidth();
+  } else if (e.ctrlKey && e.key === "l") {
+    clear();
+    e.preventDefault();
+  } else if (e.key === "Tab") {
+    e.preventDefault();
+    const split = input.value.split(" ");
+    const cmd = split[0].toLowerCase();
+    if (split.length > 1) {
+      handleAutoComplete(cmd, split);
+    } else {
+      const matchingCommands = commandsList.filter((command) => command.startsWith(cmd));
+      if (matchingCommands.length === 1) {
+        split[0] = matchingCommands[0];
+        input.value = split.join(" ");
+        moveCursorToEnd();
+      }
+    }
+  }
+});
+window.addEventListener("keydown", (e) => {
+  if (document.activeElement !== input) {
+    if (e.target instanceof HTMLAnchorElement && (e.key === "Enter" || e.key === " ")) {
+      return;
+    }
+    input.focus();
+  }
+});
+function colorCommand() {
+  const cmd = input.value.split(" ")[0].toLowerCase();
+  input.style.color = commandsList.includes(cmd) ? "#0f0" : "";
+}
+window.addEventListener("keyup", colorCommand);
+window.addEventListener("input", colorCommand);
+var konamiCode = [
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a"
+];
+var konamiIndex = 0;
+window.addEventListener("keydown", (e) => {
+  if (e.key === konamiCode[konamiIndex]) {
+    konamiIndex++;
+    if (konamiIndex === konamiCode.length) {
+      handleCommand("konami");
+      konamiIndex = 0;
+    }
+  } else {
+    konamiIndex = 0;
+  }
+});
+function resetDash() {
+  qs(".prompt").innerHTML = fileSystem.getCWD() + " $ ";
 }
 
 // src/commands/filesystem.ts
@@ -1677,6 +1687,9 @@ function cmdHelp() {
   printAvailable("reset", "Reset your game progress");
   printAvailable("coinflip", "Flip a coin");
   printAvailable("matrix", "Enter the Matrix");
+  if (userLevel < 6)
+    return;
+  printAvailable("stats", "How many times have you cleared the terminal?");
 }
 
 // src/commands/info.ts
@@ -1694,6 +1707,22 @@ function cmdAchievements() {
       print(`[ ] ${a.name} - ${a.description} (+${a.xp} XP)`, "dim");
     }
   });
+}
+function cmdStats() {
+  const statsRaw = localStorage.getItem("stats") || "{}";
+  const stats = JSON.parse(statsRaw);
+  print("Stats:", "system");
+  const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+  for (const [cmd, count] of sorted) {
+    print(`${cmd}: ${count}`, "dim");
+  }
+  unlockAchievement("stats_check");
+}
+function incrementStats(cmd) {
+  const statsRaw = localStorage.getItem("stats") || "{}";
+  const stats = JSON.parse(statsRaw);
+  stats[cmd] = (stats[cmd] || 0) + 1;
+  localStorage.setItem("stats", JSON.stringify(stats));
 }
 
 // src/commands/mail.ts
@@ -1828,6 +1857,7 @@ function cmdRun() {
 var registry = {
   help: { fn: () => cmdHelp() },
   status: { fn: () => cmdStatus() },
+  stats: { fn: () => cmdStats() },
   achievements: { aliases: ["a"], fn: () => cmdAchievements() },
   links: {
     fn: () => {
@@ -1851,6 +1881,7 @@ var registry = {
     aliases: ["git", "source"],
     fn: () => {
       window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
+      unlockAchievement("developer");
     }
   },
   news: { aliases: ["changelog", "updates"], fn: () => cmdNews() },
@@ -1923,6 +1954,7 @@ function handleCommand(command) {
   }
   if (commandDef) {
     commandDef.fn({ args, fullArgs, command });
+    incrementStats(lowerCmd);
   } else {
     if (achievementCounters.lastFailedCommand === command) {
       achievementCounters.failedCommandCount++;
