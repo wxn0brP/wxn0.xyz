@@ -274,6 +274,48 @@ function clear() {
   output.innerHTML = "";
 }
 
+// src/commands/help.ts
+function printAvailable(name, description) {
+  print(`  <span class="success">${name}</span> - ${description}`);
+}
+function cmdHelp() {
+  let userLevel = $store.level.get();
+  print("Available commands:");
+  printAvailable("help", "Show this help message");
+  printAvailable("status", "Show your current level and XP");
+  printAvailable("hack", "Start a hacking mission to gain XP");
+  printAvailable("links", "Show unlocked links");
+  printAvailable("clear", "Clear the terminal");
+  printAvailable("source", "Source code");
+  if (userLevel < 1)
+    return;
+  printAvailable("achievements/a", "Show your achievements");
+  printAvailable("mine", "Mine for XP (Process intensive)");
+  printAvailable("date", "Show current system time");
+  printAvailable("whoami", "Display current user");
+  printAvailable("echo [text]", "Print text to terminal");
+  if (userLevel < 2)
+    return;
+  printAvailable("ls/dir", "List directory contents");
+  printAvailable("cd [path]", "Change directory");
+  printAvailable("cat [file]", "Read file content");
+  printAvailable("pwd", "Print working directory");
+  if (userLevel < 3)
+    return;
+  printAvailable("zhiva [name]", "Run Zhiva app");
+  printAvailable("snake", "Play Snake (Earn XP!)");
+  printAvailable("vim/vi", "Open vim editor");
+  if (userLevel < 4)
+    return;
+  printAvailable("pong", "Play Pong (Earn XP!)");
+  if (userLevel < 5)
+    return;
+  printAvailable("shop", "Open the Dark Market (Buy upgrades)");
+  printAvailable("reset", "Reset your game progress");
+  printAvailable("coinflip", "Flip a coin");
+  printAvailable("matrix", "Enter the Matrix");
+}
+
 // src/save.ts
 function saveGame() {
   const gameState = {
@@ -810,6 +852,40 @@ function getVisibleAchievements() {
   return visible;
 }
 
+// src/commands/info.ts
+function cmdStatus() {
+  showStatus();
+  unlockAchievement("status_check");
+}
+function cmdAchievements() {
+  print(`Available Achievements (${getAchievementProgress()}):`);
+  const visible = getVisibleAchievements();
+  visible.forEach((a) => {
+    if (a.unlocked) {
+      print(`[x] <span class="success">${a.name}</span> - ${a.description} (+${a.xp} XP)`, "system");
+    } else {
+      print(`[ ] ${a.name} - ${a.description} (+${a.xp} XP)`, "dim");
+    }
+  });
+}
+
+// src/commands/social.ts
+function cmdLinks() {
+  showLinks();
+  unlockAchievement("link_finder");
+}
+function cmdWhoami() {
+  print("guest@wxn0.xyz");
+  unlockAchievement("self_aware");
+}
+function cmdDate() {
+  print(new Date().toString());
+  unlockAchievement("time_traveler");
+}
+function cmdGithub() {
+  window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
+}
+
 // src/filesystem.ts
 class VirtualFileSystem {
   root = null;
@@ -1092,160 +1168,104 @@ function cat(code) {
   output.appendChild(p);
 }
 
-// src/game/pong.ts
-function startPong() {
-  const originalOutputDisplay = output.style.display;
-  const inputLine = qs("#input-line");
-  const originalInputLineDisplay = inputLine.style.display;
-  output.style.display = "none";
-  inputLine.style.display = "none";
-  input.blur();
-  const canvas = document.createElement("canvas");
-  canvas.id = "pong-canvas";
-  canvas.style.position = "fixed";
-  canvas.style.top = "0";
-  canvas.style.left = "0";
-  canvas.style.zIndex = "2000";
-  canvas.style.backgroundColor = "#000";
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    alert("Canvas not supported!");
-    cleanup();
+// src/commands/filesystem.ts
+function cmdLs(arg) {
+  fileSystem.ls(arg);
+  unlockAchievement("explorer");
+}
+function cmdDir() {
+  print("Windows sucks.", "error");
+}
+function cmdCd(arg) {
+  fileSystem.cd(arg);
+  achievementCounters.cdCount++;
+  if (achievementCounters.cdCount >= 5)
+    unlockAchievement("navigator");
+}
+function cmdPwd() {
+  print(fileSystem.getCWD());
+}
+function cmdCat(arg) {
+  if (!arg || !isNaN(+arg)) {
+    cat(+arg);
     return;
   }
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+  fileSystem.cat(arg);
+  unlockAchievement("reader");
+}
+function cmdRm() {
+  print("Permission denied.", "error");
+  unlockAchievement("destructor");
+}
+
+// src/commands/fun.ts
+function cmdSudo(args, fullArgs) {
+  const firstArg = args[0];
+  if (firstArg === "cat") {
+    fileSystem.cat(args[1], true);
+    return;
   }
-  resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-  const PADDLE_WIDTH = 10;
-  const PADDLE_HEIGHT = 150;
-  const BALL_SIZE = 10;
-  const PLAYER_SPEED = 12;
-  const AI_SPEED = 8;
-  let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
-  let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
-  let ballX = canvas.width / 2;
-  let ballY = canvas.height / 2;
-  let ballSpeedX = 5;
-  let ballSpeedY = 5;
-  let playerScore = 0;
-  let aiScore = 0;
-  let gameLoopId;
-  const keys = {
-    ArrowUp: false,
-    ArrowDown: false
-  };
-  function handleKeyDown(e) {
-    if (e.key === "ArrowUp")
-      keys.ArrowUp = true;
-    if (e.key === "ArrowDown")
-      keys.ArrowDown = true;
-    if (e.key === "Escape")
-      cleanup();
+  if (fullArgs === "make me a sandwich") {
+    print("Okay.", "success");
+    unlockAchievement("curious");
+    return;
   }
-  function handleKeyUp(e) {
-    if (e.key === "ArrowUp")
-      keys.ArrowUp = false;
-    if (e.key === "ArrowDown")
-      keys.ArrowDown = false;
+  if (firstArg === "rm" && ["-rf", "-fr"].includes(args[1]) && args[2] === "/") {
+    systemDestroy();
+    return;
   }
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
-  function resetBall() {
-    ballX = canvas.width / 2;
-    ballY = canvas.height / 2;
-    ballSpeedX = -ballSpeedX;
-    ballSpeedY = (Math.random() - 0.5) * 10;
+  print("nice try, but you have no power here.", "error");
+}
+function cmdEcho(fullArgs) {
+  print(fullArgs || " ");
+  achievementCounters.echoCount++;
+  if (achievementCounters.echoCount >= 10)
+    unlockAchievement("echo_chamber");
+}
+function cmdMake(args) {
+  if (args.join(" ") === "me a sandwich") {
+    print("What? Make it yourself.", "system");
+  } else {
+    print("make: *** No targets specified and no makefile found. Stop.", "error");
   }
-  function update() {
-    if (keys.ArrowUp && playerY > 0)
-      playerY -= PLAYER_SPEED;
-    if (keys.ArrowDown && playerY < canvas.height - PADDLE_HEIGHT)
-      playerY += PLAYER_SPEED;
-    if (ballSpeedX > 0) {
-      const aiCenter = aiY + PADDLE_HEIGHT / 2;
-      if (aiCenter < ballY) {
-        aiY += AI_SPEED;
-      } else if (aiCenter > ballY) {
-        aiY -= AI_SPEED;
-      }
+}
+function cmdMatrix() {
+  print("The Matrix has you...", "success");
+  unlockAchievement("matrix_fan");
+}
+function cmdCoinflip() {
+  print(Math.random() > 0.5 ? "Heads" : "Tails", "success");
+  achievementCounters.coinflipCount++;
+  if (achievementCounters.coinflipCount >= 10)
+    unlockAchievement("coin_flipper");
+}
+function cmd42() {
+  print("The answer to life, the universe, and everything.", "success");
+  unlockAchievement("answer_seeker");
+}
+function cmdKonami() {
+  document.body.classList.toggle("god-mode");
+  const isGod = document.body.classList.contains("god-mode");
+  const box = document.querySelector(".prompt");
+  if (isGod) {
+    print("GOD MODE ACTIVATED", "system");
+    print("Unlimited power...", "dim");
+    unlockAchievement("god_mode");
+    if (box) {
+      box.textContent = "GOD#";
+      box.style.color = "#fff";
     }
-    aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
-    ballX += ballSpeedX;
-    ballY += ballSpeedY;
-    if (ballY < 0 || ballY > canvas.height - BALL_SIZE) {
-      ballSpeedY = -ballSpeedY;
-    }
-    if (ballX < PADDLE_WIDTH + 10 && ballX > 10 && ballY + BALL_SIZE > playerY && ballY < playerY + PADDLE_HEIGHT) {
-      ballSpeedX = -ballSpeedX;
-      const deltaY = ballY - (playerY + PADDLE_HEIGHT / 2);
-      ballSpeedY = deltaY * 0.35;
-      if (Math.abs(ballSpeedX) < 15) {
-        ballSpeedX *= 1.05;
-      }
-    }
-    if (ballX > canvas.width - PADDLE_WIDTH - 10 - BALL_SIZE && ballX < canvas.width - 10 && ballY + BALL_SIZE > aiY && ballY < aiY + PADDLE_HEIGHT) {
-      ballSpeedX = -ballSpeedX;
-      const deltaY = ballY - (aiY + PADDLE_HEIGHT / 2);
-      ballSpeedY = deltaY * 0.35;
-    }
-    if (ballX < 0) {
-      aiScore++;
-      resetBall();
-    } else if (ballX > canvas.width) {
-      playerScore++;
-      addXp(10);
-      resetBall();
-    }
-    draw();
-  }
-  function draw() {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#444";
-    ctx.setLineDash([10, 15]);
-    ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0);
-    ctx.lineTo(canvas.width / 2, canvas.height);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(10, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
-    ctx.fillRect(canvas.width - PADDLE_WIDTH - 10, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
-    ctx.fillRect(ballX, ballY, BALL_SIZE, BALL_SIZE);
-    ctx.font = "40px monospace";
-    ctx.fillText(playerScore.toString(), canvas.width / 4, 50);
-    ctx.fillText(aiScore.toString(), canvas.width * 3 / 4, 50);
-    ctx.font = "16px monospace";
-    const msg = "Arrow Up/Down to move | Esc to exit";
-    const metrics = ctx.measureText(msg);
-    ctx.fillText(msg, canvas.width / 2 - metrics.width / 2, canvas.height - 20);
-  }
-  function loop() {
-    update();
-    gameLoopId = requestAnimationFrame(loop);
-  }
-  function cleanup() {
-    cancelAnimationFrame(gameLoopId);
-    window.removeEventListener("keydown", handleKeyDown);
-    window.removeEventListener("keyup", handleKeyUp);
-    window.removeEventListener("resize", resizeCanvas);
-    if (canvas && canvas.parentNode)
-      canvas.parentNode.removeChild(canvas);
-    output.style.display = originalOutputDisplay;
-    inputLine.style.display = originalInputLineDisplay;
-    input.focus();
-    print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
-    const xp = playerScore * 5 - aiScore;
-    addXp(xp);
-    if (playerScore >= 10) {
-      unlockAchievement("pong_winner");
+  } else {
+    print("God mode... disabled due to budget cuts.", "dim");
+    if (box) {
+      box.textContent = ">";
+      box.style.color = "";
     }
   }
-  gameLoopId = requestAnimationFrame(loop);
+}
+function cmdHello() {
+  print("Hello there!", "system");
+  unlockAchievement("hello_world");
 }
 
 // src/game/snake.ts
@@ -1447,48 +1467,283 @@ function startSnake() {
   draw();
 }
 
-// src/commands.ts
-var box = qs(".prompt");
-function printAvailable(name, description) {
-  print(`  <span class="success">${name}</span> - ${description}`);
+// src/game/pong.ts
+function startPong() {
+  const originalOutputDisplay = output.style.display;
+  const inputLine = qs("#input-line");
+  const originalInputLineDisplay = inputLine.style.display;
+  output.style.display = "none";
+  inputLine.style.display = "none";
+  input.blur();
+  const canvas = document.createElement("canvas");
+  canvas.id = "pong-canvas";
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.zIndex = "2000";
+  canvas.style.backgroundColor = "#000";
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    alert("Canvas not supported!");
+    cleanup();
+    return;
+  }
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+  const PADDLE_WIDTH = 10;
+  const PADDLE_HEIGHT = 150;
+  const BALL_SIZE = 10;
+  const PLAYER_SPEED = 12;
+  const AI_SPEED = 8;
+  let playerY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+  let aiY = canvas.height / 2 - PADDLE_HEIGHT / 2;
+  let ballX = canvas.width / 2;
+  let ballY = canvas.height / 2;
+  let ballSpeedX = 5;
+  let ballSpeedY = 5;
+  let playerScore = 0;
+  let aiScore = 0;
+  let gameLoopId;
+  const keys = {
+    ArrowUp: false,
+    ArrowDown: false
+  };
+  function handleKeyDown(e) {
+    if (e.key === "ArrowUp")
+      keys.ArrowUp = true;
+    if (e.key === "ArrowDown")
+      keys.ArrowDown = true;
+    if (e.key === "Escape")
+      cleanup();
+  }
+  function handleKeyUp(e) {
+    if (e.key === "ArrowUp")
+      keys.ArrowUp = false;
+    if (e.key === "ArrowDown")
+      keys.ArrowDown = false;
+  }
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
+  function resetBall() {
+    ballX = canvas.width / 2;
+    ballY = canvas.height / 2;
+    ballSpeedX = -ballSpeedX;
+    ballSpeedY = (Math.random() - 0.5) * 10;
+  }
+  function update() {
+    if (keys.ArrowUp && playerY > 0)
+      playerY -= PLAYER_SPEED;
+    if (keys.ArrowDown && playerY < canvas.height - PADDLE_HEIGHT)
+      playerY += PLAYER_SPEED;
+    if (ballSpeedX > 0) {
+      const aiCenter = aiY + PADDLE_HEIGHT / 2;
+      if (aiCenter < ballY) {
+        aiY += AI_SPEED;
+      } else if (aiCenter > ballY) {
+        aiY -= AI_SPEED;
+      }
+    }
+    aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+    if (ballY < 0 || ballY > canvas.height - BALL_SIZE) {
+      ballSpeedY = -ballSpeedY;
+    }
+    if (ballX < PADDLE_WIDTH + 10 && ballX > 10 && ballY + BALL_SIZE > playerY && ballY < playerY + PADDLE_HEIGHT) {
+      ballSpeedX = -ballSpeedX;
+      const deltaY = ballY - (playerY + PADDLE_HEIGHT / 2);
+      ballSpeedY = deltaY * 0.35;
+      if (Math.abs(ballSpeedX) < 15) {
+        ballSpeedX *= 1.05;
+      }
+    }
+    if (ballX > canvas.width - PADDLE_WIDTH - 10 - BALL_SIZE && ballX < canvas.width - 10 && ballY + BALL_SIZE > aiY && ballY < aiY + PADDLE_HEIGHT) {
+      ballSpeedX = -ballSpeedX;
+      const deltaY = ballY - (aiY + PADDLE_HEIGHT / 2);
+      ballSpeedY = deltaY * 0.35;
+    }
+    if (ballX < 0) {
+      aiScore++;
+      resetBall();
+    } else if (ballX > canvas.width) {
+      playerScore++;
+      addXp(10);
+      resetBall();
+    }
+    draw();
+  }
+  function draw() {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#444";
+    ctx.setLineDash([10, 15]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(10, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(canvas.width - PADDLE_WIDTH - 10, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(ballX, ballY, BALL_SIZE, BALL_SIZE);
+    ctx.font = "40px monospace";
+    ctx.fillText(playerScore.toString(), canvas.width / 4, 50);
+    ctx.fillText(aiScore.toString(), canvas.width * 3 / 4, 50);
+    ctx.font = "16px monospace";
+    const msg = "Arrow Up/Down to move | Esc to exit";
+    const metrics = ctx.measureText(msg);
+    ctx.fillText(msg, canvas.width / 2 - metrics.width / 2, canvas.height - 20);
+  }
+  function loop() {
+    update();
+    gameLoopId = requestAnimationFrame(loop);
+  }
+  function cleanup() {
+    cancelAnimationFrame(gameLoopId);
+    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("keyup", handleKeyUp);
+    window.removeEventListener("resize", resizeCanvas);
+    if (canvas && canvas.parentNode)
+      canvas.parentNode.removeChild(canvas);
+    output.style.display = originalOutputDisplay;
+    inputLine.style.display = originalInputLineDisplay;
+    input.focus();
+    print(`Game Over! Player: ${playerScore} | AI: ${aiScore}`);
+    const xp = playerScore * 5 - aiScore;
+    addXp(xp);
+    if (playerScore >= 10) {
+      unlockAchievement("pong_winner");
+    }
+  }
+  gameLoopId = requestAnimationFrame(loop);
 }
-var commandsList = [
-  "help",
-  "status",
-  "hack",
-  "links",
-  "ls",
-  "dir",
-  "cd",
-  "cat",
-  "pwd",
-  "clear",
-  "reset",
-  "welcome",
-  "return",
-  "run",
-  "sudo",
-  "echo",
-  "date",
-  "whoami",
-  "exit",
-  "suglite",
-  "matrix",
-  "coinflip",
-  "hello",
-  "zhiva",
-  "mine",
-  "make",
-  "vim",
-  "vi",
-  "rm",
-  "snake",
-  "pong",
-  "source",
-  "achievements",
-  "a",
-  "shop"
-];
+
+// src/commands/games.ts
+function cmdHack() {
+  startHack();
+}
+function cmdMine() {
+  startMining();
+}
+function cmdShop(args) {
+  startShop(args);
+}
+function cmdVim() {
+  openVim();
+}
+function cmdSnake() {
+  startSnake();
+  unlockAchievement("snake_player");
+}
+function cmdPong() {
+  startPong();
+  unlockAchievement("pong_player");
+}
+function cmdZhiva(arg) {
+  if (!arg) {
+    print("Usage: zhiva [name]", "error");
+    return;
+  }
+  let target = arg;
+  if (!target.includes("/"))
+    target = `wxn0brP/${target}`;
+  unlockAchievement("zhiva_user");
+  location.href = `zhiva://start/${target}`;
+}
+
+// src/commands/system.ts
+function cmdClear() {
+  clear();
+  achievementCounters.clearCount++;
+  if (achievementCounters.clearCount >= 10)
+    unlockAchievement("clean_freak");
+}
+function cmdReset() {
+  resetGame();
+}
+function cmdWelcome() {
+  welcome();
+}
+function cmdExit() {
+  print("There is no escape.", "error");
+  achievementCounters.exitCount++;
+  if (achievementCounters.exitCount >= 5)
+    unlockAchievement("escape_artist");
+}
+function cmdSuglite() {
+  print("Suglite is watching...", "system");
+}
+function cmdReturn() {
+  localStorage.setItem("notHappened", "true");
+  location.reload();
+}
+function cmdRun() {
+  localStorage.removeItem("run");
+  location.reload();
+}
+
+// src/commands/developer.ts
+function cmdXp(arg) {
+  if (!isNaN(+arg)) {
+    addXp(+arg);
+    print("Gained " + arg + " XP! Cheater :/", "success");
+  }
+}
+function cmdSetAchievement(id) {
+  if (id) {
+    unlockAchievement(id);
+  }
+}
+
+// src/commands/index.ts
+var registry = {
+  help: { fn: () => cmdHelp() },
+  status: { fn: () => cmdStatus() },
+  achievements: { aliases: ["a"], fn: () => cmdAchievements() },
+  links: { fn: () => cmdLinks() },
+  whoami: { fn: () => cmdWhoami() },
+  date: { fn: () => cmdDate() },
+  github: { aliases: ["git", "source"], fn: () => cmdGithub() },
+  hello: { aliases: ["hi"], fn: () => cmdHello() },
+  ls: { aliases: ["ll"], fn: ({ args }) => cmdLs(args[0]) },
+  dir: { fn: () => cmdDir() },
+  cd: { fn: ({ args }) => cmdCd(args[0]) },
+  pwd: { fn: () => cmdPwd() },
+  cat: { fn: ({ args }) => cmdCat(args[0]) },
+  rm: { fn: () => cmdRm() },
+  hack: { fn: () => cmdHack() },
+  mine: { fn: () => cmdMine() },
+  shop: { aliases: ["store"], fn: ({ fullArgs }) => cmdShop(fullArgs) },
+  vim: { aliases: ["vi"], fn: () => cmdVim() },
+  snake: { fn: () => cmdSnake() },
+  pong: { aliases: ["ping"], fn: () => cmdPong() },
+  zhiva: { fn: ({ args }) => cmdZhiva(args[0]) },
+  clear: { fn: () => cmdClear() },
+  reset: { fn: () => cmdReset() },
+  welcome: { fn: () => cmdWelcome() },
+  exit: { fn: () => cmdExit() },
+  return: { fn: () => cmdReturn() },
+  run: { fn: () => cmdRun() },
+  suglite: { fn: () => cmdSuglite() },
+  sudo: { fn: ({ args, fullArgs }) => cmdSudo(args, fullArgs) },
+  echo: { fn: ({ fullArgs }) => cmdEcho(fullArgs) },
+  make: { fn: ({ args }) => cmdMake(args) },
+  matrix: { fn: () => cmdMatrix() },
+  coinflip: { fn: () => cmdCoinflip() },
+  42: { fn: () => cmd42() },
+  konami: { fn: () => cmdKonami() },
+  xp: { fn: ({ args }) => cmdXp(args[0]) },
+  "set-achievement": { fn: ({ args }) => cmdSetAchievement(args[0]) }
+};
+var commandsList = Object.keys(registry).flatMap((key) => {
+  const aliases = registry[key].aliases || [];
+  return [key, ...aliases];
+});
 function handleCommand(command) {
   if (!command.trim()) {
     return;
@@ -1499,259 +1754,34 @@ function handleCommand(command) {
     tryHack(command);
     return;
   }
-  const [cmd, ...args] = command.split(" ");
-  const fullArgs = command.substring(cmd.length + 1);
-  let firstArg = args[0];
+  const [cmdName, ...args] = command.split(" ");
+  const fullArgs = command.substring(cmdName.length + 1);
+  const lowerCmd = cmdName.toLowerCase();
   print("$ " + command);
-  switch (cmd.toLowerCase()) {
-    case "help":
-      let userLevel = $store.level.get();
-      print("Available commands:");
-      printAvailable("help", "Show this help message");
-      printAvailable("status", "Show your current level and XP");
-      printAvailable("hack", "Start a hacking mission to gain XP");
-      printAvailable("links", "Show unlocked links");
-      printAvailable("clear", "Clear the terminal");
-      printAvailable("source", "Source code");
-      if (userLevel < 1)
-        break;
-      printAvailable("achievements/a", "Show your achievements");
-      printAvailable("mine", "Mine for XP (Process intensive)");
-      printAvailable("date", "Show current system time");
-      printAvailable("whoami", "Display current user");
-      printAvailable("echo [text]", "Print text to terminal");
-      if (userLevel < 2)
-        break;
-      printAvailable("ls/dir", "List directory contents");
-      printAvailable("cd [path]", "Change directory");
-      printAvailable("cat [file]", "Read file content");
-      printAvailable("pwd", "Print working directory");
-      if (userLevel < 3)
-        break;
-      printAvailable("zhiva [name]", "Run Zhiva app");
-      printAvailable("snake", "Play Snake (Earn XP!)");
-      printAvailable("vim/vi", "Open vim editor");
-      if (userLevel < 4)
-        break;
-      printAvailable("pong", "Play Pong (Earn XP!)");
-      if (userLevel < 5)
-        break;
-      printAvailable("shop", "Open the Dark Market (Buy upgrades)");
-      printAvailable("reset", "Reset your game progress");
-      printAvailable("coinflip", "Flip a coin");
-      printAvailable("matrix", "Enter the Matrix");
-      break;
-    case "shop":
-    case "store":
-      startShop(fullArgs);
-      break;
-    case "status":
-      showStatus();
-      unlockAchievement("status_check");
-      break;
-    case "hack":
-      startHack();
-      break;
-    case "mine":
-      startMining();
-      break;
-    case "links":
-      showLinks();
-      unlockAchievement("link_finder");
-      break;
-    case "vim":
-    case "vi":
-      openVim();
-      break;
-    case "clear":
-      clear();
-      achievementCounters.clearCount++;
-      if (achievementCounters.clearCount >= 10)
-        unlockAchievement("clean_freak");
-      break;
-    case "reset":
-      resetGame();
-      break;
-    case "welcome":
-      welcome();
-      break;
-    case "snake":
-      startSnake();
-      unlockAchievement("snake_player");
-      break;
-    case "pong":
-    case "ping":
-      startPong();
-      unlockAchievement("pong_player");
-      break;
-    case "return":
-      localStorage.setItem("notHappened", "true");
-      location.reload();
-      break;
-    case "run":
-      localStorage.removeItem("run");
-      location.reload();
-      break;
-    case "sudo":
-      if (firstArg === "cat") {
-        fileSystem.cat(args[1], true);
+  let commandDef;
+  if (registry[lowerCmd]) {
+    commandDef = registry[lowerCmd];
+  } else {
+    for (const key in registry) {
+      if (registry[key].aliases?.includes(lowerCmd)) {
+        commandDef = registry[key];
         break;
       }
-      if (fullArgs === "make me a sandwich") {
-        print("Okay.", "success");
-        unlockAchievement("curious");
-        break;
+    }
+  }
+  if (commandDef) {
+    commandDef.fn({ args, fullArgs, command });
+  } else {
+    if (achievementCounters.lastFailedCommand === command) {
+      achievementCounters.failedCommandCount++;
+      if (achievementCounters.failedCommandCount >= 3) {
+        unlockAchievement("persistent");
       }
-      if (firstArg === "rm" && ["-rf", "-fr"].includes(args[1]) && args[2] === "/") {
-        systemDestroy();
-        break;
-      }
-      print("nice try, but you have no power here.", "error");
-      break;
-    case "echo":
-      print(fullArgs || " ");
-      achievementCounters.echoCount++;
-      if (achievementCounters.echoCount >= 10)
-        unlockAchievement("echo_chamber");
-      break;
-    case "date":
-      print(new Date().toString());
-      unlockAchievement("time_traveler");
-      break;
-    case "whoami":
-      print("guest@wxn0.xyz");
-      unlockAchievement("self_aware");
-      break;
-    case "make":
-      if (args.join(" ") === "me a sandwich") {
-        print("What? Make it yourself.", "system");
-      } else {
-        print("make: *** No targets specified and no makefile found. Stop.", "error");
-      }
-      break;
-    case "exit":
-      print("There is no escape.", "error");
-      achievementCounters.exitCount++;
-      if (achievementCounters.exitCount >= 5)
-        unlockAchievement("escape_artist");
-      break;
-    case "rm":
-      print("Permission denied.", "error");
-      unlockAchievement("destructor");
-      break;
-    case "suglite":
-      print("Suglite is watching...", "system");
-      break;
-    case "matrix":
-      print("The Matrix has you...", "success");
-      unlockAchievement("matrix_fan");
-      break;
-    case "coinflip":
-      print(Math.random() > 0.5 ? "Heads" : "Tails", "success");
-      achievementCounters.coinflipCount++;
-      if (achievementCounters.coinflipCount >= 10)
-        unlockAchievement("coin_flipper");
-      break;
-    case "42":
-      print("The answer to life, the universe, and everything.", "success");
-      unlockAchievement("answer_seeker");
-      break;
-    case "konami":
-      document.body.classList.toggle("god-mode");
-      const isGod = document.body.classList.contains("god-mode");
-      if (isGod) {
-        print("GOD MODE ACTIVATED", "system");
-        print("Unlimited power...", "dim");
-        unlockAchievement("god_mode");
-        box.textContent = "GOD#";
-        box.style.color = "#fff";
-      } else {
-        print("God mode... disabled due to budget cuts.", "dim");
-        box.textContent = ">";
-        box.style.color = "";
-      }
-      break;
-    case "hello":
-    case "hi":
-      print("Hello there!", "system");
-      unlockAchievement("hello_world");
-      break;
-    case "ls":
-    case "ll":
-      fileSystem.ls(firstArg);
-      unlockAchievement("explorer");
-      break;
-    case "dir":
-      print("Windows sucks.", "error");
-      break;
-    case "cd":
-      fileSystem.cd(firstArg);
-      achievementCounters.cdCount++;
-      if (achievementCounters.cdCount >= 5)
-        unlockAchievement("navigator");
-      break;
-    case "cat":
-      if (!firstArg || !isNaN(+firstArg)) {
-        cat(+firstArg);
-        break;
-      }
-      fileSystem.cat(firstArg);
-      unlockAchievement("reader");
-      break;
-    case "pwd":
-      print(fileSystem.getCWD());
-      break;
-    case "zhiva":
-      if (!firstArg) {
-        print("Usage: zhiva [name]", "error");
-        break;
-      }
-      if (!firstArg.includes("/"))
-        firstArg = `wxn0brP/${firstArg}`;
-      unlockAchievement("zhiva_user");
-      location.href = `zhiva://start/${firstArg}`;
-      break;
-    case "xp":
-      if (!isNaN(+firstArg)) {
-        addXp(+firstArg);
-        print("Gained " + firstArg + " XP! Cheater :/", "success");
-        break;
-      }
-      break;
-    case "github":
-    case "git":
-    case "source":
-      window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
-      break;
-    case "set-achievement":
-      if (firstArg) {
-        unlockAchievement(firstArg);
-      }
-      break;
-    case "a":
-    case "achievements":
-      print(`Available Achievements (${getAchievementProgress()}):`);
-      const visible = getVisibleAchievements();
-      visible.forEach((a) => {
-        if (a.unlocked) {
-          print(`[x] <span class="success">${a.name}</span> - ${a.description} (+${a.xp} XP)`, "system");
-        } else {
-          print(`[ ] ${a.name} - ${a.description} (+${a.xp} XP)`, "dim");
-        }
-      });
-      break;
-    default:
-      if (achievementCounters.lastFailedCommand === command) {
-        achievementCounters.failedCommandCount++;
-        if (achievementCounters.failedCommandCount >= 3) {
-          unlockAchievement("persistent");
-        }
-      } else {
-        achievementCounters.lastFailedCommand = command;
-        achievementCounters.failedCommandCount = 1;
-      }
-      print(`Command not found: <span class="error">${command}</span>`, "error");
-      break;
+    } else {
+      achievementCounters.lastFailedCommand = command;
+      achievementCounters.failedCommandCount = 1;
+    }
+    print(`Command not found: <span class="error">${command}</span>`, "error");
   }
 }
 
