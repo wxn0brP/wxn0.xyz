@@ -10,6 +10,7 @@ export function print(message: string, className?: string) {
     }
     output.appendChild(p);
     terminal.scrollTop = terminal.scrollHeight;
+    return p;
 }
 
 export function printCommand(command: string) {

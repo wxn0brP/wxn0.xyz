@@ -6,7 +6,7 @@ import { cmdSudo, cmdEcho, cmdMake, cmdMatrix, cmdCoinflip, cmd42, cmdKonami, cm
 import { cmdHack, cmdMine, cmdShop, cmdVim, cmdSnake, cmdPong, cmdZhiva } from "./games";
 import { cmdClear, cmdReset, cmdWelcome, cmdExit, cmdSuglite, cmdReturn, cmdRun } from "./system";
 import { cmdXp, cmdSetAchievement } from "./developer";
-import { cmdMail } from "./story";
+import { cmdMail } from "./mail";
 
 import { print, printCommand } from "../ui";
 import { unlockAchievement, achievementCounters } from "../achievements";
@@ -64,7 +64,7 @@ const registry: Record<string, CommandDefinition> = {
     return: { fn: () => cmdReturn() },
     run: { fn: () => cmdRun() },
     suglite: { fn: () => cmdSuglite() },
-    mail: { aliases: ["inbox", "email"], fn: ({ args }) => cmdMail(args) },
+    mail: { aliases: ["inbox", "email"], fn: ({ args, fullArgs }) => cmdMail(args, fullArgs) },
 
     // Fun
     sudo: { fn: ({ args, fullArgs }) => cmdSudo(args, fullArgs) },

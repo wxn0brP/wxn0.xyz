@@ -16,6 +16,7 @@ export function cmdHelp() {
     printAvailable("links", "Show unlocked links");
     printAvailable("clear", "Clear the terminal");
     printAvailable("source", "Source code");
+    printAvailable("mail", "See inbox / Send mail");
 
     if (userLevel < 1) return;
 

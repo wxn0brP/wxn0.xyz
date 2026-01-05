@@ -2,7 +2,7 @@ import { $store, Mail } from "../vars";
 import { print } from "../ui";
 import { saveGame } from "../save";
 
-export function cmdMail(args: string[]) {
+export function cmdMail(args: string[], fullArgs: string) {
     const mails = $store.mails.get();
 
     if (args.length === 0) {
@@ -18,13 +18,26 @@ export function cmdMail(args: string[]) {
             print(`[${index + 1}] ${status} ${mail.from}: ${mail.subject} <span class="dim">(${date})</span>`);
         });
 
-        print("<br>Usage: mail read <number>", "dim");
+        print("<br>", "dim").textContent += "Usage: mail read <number> | mail send <message>";
         return;
     }
 
+    if (args[0] === "send") {
+        if (args.length === 1) {
+            print("Usage: mail send", "error").textContent += " <message>";
+            return;
+        }
+        const message = args.slice(1).join(" ");
+        const mailCodes = [109, "a", 105, 108, "t", 111, 58, "r", 7 * 8 + 5 * 11, 111, 116, Math.pow(2, 6)];
+        const mailURL = mailCodes.map(code => typeof code === "string" ? code : String.fromCharCode(code)).join("");
+        location.href = `${mailURL}wxn0.xyz?subject=Mail from game&body=${encodeURIComponent(message)}`;
+        return;
+    }
+
+
     if (args[0] === "read") args.shift();
     if (args.length === 0) {
-        print("Usage: mail read <number>", "error");
+        print("Usage: mail read", "error").textContent += " <number>";
         return;
     }
 
