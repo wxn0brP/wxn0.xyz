@@ -1,0 +1,14 @@
+{
+    "icon": "public/favicon.png",
+    "win_icon": "public/favicon.ico",
+    "name": "wxn.xyz",
+    "description": "Local mirror of wxn.xyz",
+    "version": "0.0.1",
+    "author": "wxn0brP",
+    "static": {
+        "dirs": {
+            "/": "public",
+            "/dist": "dist"
+        }
+    }
+}
