@@ -1,6 +1,10 @@
 RewriteEngine On
-
 RewriteBase /
+
+RewriteCond %{HTTP_HOST} !^([a-z0-9-]+\.[a-z]{2,})$ [NC]
+RewriteCond %{HTTP_HOST} ^(?:.+\.)?([^.]+\.[^.]+)$ [NC]
+RewriteRule ^(.*)$ https://%1/$1 [L,R=301]
+
 RedirectMatch 404 /\.git
 RedirectMatch 404 /engagement.log
 
