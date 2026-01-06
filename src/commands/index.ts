@@ -4,7 +4,23 @@ import { hackingMission, openVim, showLinks, startHack, startMining, startShop, 
 import { print, printCommand } from "../ui";
 import { cmdSetAchievement, cmdXp } from "./developer";
 import { cmdCat, cmdCd, cmdLs } from "./filesystem";
-import { cmd42, cmdCoinflip, cmdEcho, cmdHello, cmdKonami, cmdMake, cmdMatrix, cmdSudo } from "./fun";
+import {
+    cmd42,
+    cmdApt,
+    cmdArch,
+    cmdCoinflip,
+    cmdCowSay,
+    cmdEcho,
+    cmdFortune,
+    cmdHello,
+    cmdKonami,
+    cmdMake,
+    cmdMatrix,
+    cmdPacman,
+    cmdSl,
+    cmdSudo,
+    cmdNyanCat
+} from "./fun";
 import { cmdPong, cmdSnake, cmdZhiva } from "./games";
 import { cmdHelp } from "./help";
 import { cmdAchievements, cmdStats, cmdStatus, incrementStats } from "./info";
@@ -99,6 +115,13 @@ const registry: Record<string, CommandDefinition> = {
     coinflip: { fn: () => cmdCoinflip() },
     42: { fn: () => cmd42() },
     konami: { fn: () => cmdKonami() },
+    apt: { fn: ({ args }) => cmdApt(args) },
+    cowsay: { fn: ({ fullArgs }) => cmdCowSay(fullArgs) },
+    fortune: { fn: () => cmdFortune() },
+    arch: { fn: () => cmdArch() },
+    sl: { fn: () => cmdSl() },
+    pacman: { fn: ({ args }) => cmdPacman(args) },
+    nyan: { aliases: ["nyan-cat"], fn: () => cmdNyanCat() },
 
     // Developer
     "add-xp": { fn: ({ args }) => cmdXp(args[0]) },

@@ -60,5 +60,11 @@ export function cmdHelp() {
 
     // Level 6
     printAvailable("stats", "How many times have you cleared the terminal?");
-
+    printAvailable("apt [moo]", "Use apt");
+    printAvailable("cowsay [text]", "Use cowsay");
+    printAvailable("fortune", "Get a random fortune");
+    printAvailable("sl", "Steam Locomotive");
+    printAvailable("arch", "Use Arch");
+    printAvailable("pacman [-Syu]", "Package Manager");
+    printAvailable("nyan", "Nyan Cat");
 }

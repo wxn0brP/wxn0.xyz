@@ -45,6 +45,15 @@ export const achievements: Achievement[] = [
     { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, requiredLevel: 5 },
     { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, requiredLevel: 5 },
 
+    // Fun commands
+    { id: "apt_fan", name: "APT Fan", description: "Use apt.", xp: 25 },
+    { id: "cow_fan", name: "Cow Fan", description: "Use cowsay.", xp: 25 },
+    { id: "fortune_teller", name: "Fortune Cookie", description: "Read a fortune.", xp: 20 },
+    { id: "arch_user", name: "Arch User", description: "Announce that you use Arch.", xp: 20 },
+    { id: "train_spotter", name: "Train Spotter", description: "Watch the train.", xp: 40 },
+    { id: "pkg_master", name: "Package Master", description: "Update the system.", xp: 30 },
+    { id: "nyan_cat", name: "Nyan Cat", description: "Watch Nyan Cat.", xp: 25 },
+
     // Advanced achievements (any level)
     { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100 },
     { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250 },
