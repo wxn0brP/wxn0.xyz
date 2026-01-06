@@ -489,6 +489,13 @@ var achievements = [
   { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, requiredLevel: 4 },
   { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, requiredLevel: 5 },
   { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, requiredLevel: 5 },
+  { id: "apt_fan", name: "APT Fan", description: "Use apt.", xp: 25 },
+  { id: "cow_fan", name: "Cow Fan", description: "Use cowsay.", xp: 25 },
+  { id: "fortune_teller", name: "Fortune Cookie", description: "Read a fortune.", xp: 20 },
+  { id: "arch_user", name: "Arch User", description: "Announce that you use Arch.", xp: 20 },
+  { id: "train_spotter", name: "Train Spotter", description: "Watch the train.", xp: 40 },
+  { id: "pkg_master", name: "Package Master", description: "Update the system.", xp: 30 },
+  { id: "nyan_cat", name: "Nyan Cat", description: "Watch Nyan Cat.", xp: 25 },
   { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100 },
   { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250 },
   { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, requiredLevel: 1 },
@@ -1210,6 +1217,124 @@ function cmdHello() {
   print("Hello there!", "system");
   unlockAchievement("hello_world");
 }
+function cmdApt(args) {
+  if (args[0] === "moo") {
+    print(`
+         (__) 
+         (oo) 
+   /------\\/ 
+  / |    ||   
+ *  /\\---/\\ 
+    ~~   ~~   
+...."Have you mooed today?"...
+`, "success");
+    unlockAchievement("apt_fan");
+  } else {
+    print("E: Invalid operation " + (args[0] || ""), "error");
+  }
+}
+function cmdCowSay(fullArgs) {
+  if (!fullArgs)
+    fullArgs = "Moo";
+  const len = fullArgs.length + 2;
+  const top = " " + "_".repeat(len);
+  const bot = " " + "-".repeat(len);
+  print(`
+ ${top}
+( ${fullArgs} )
+ ${bot}
+        o   ^__^
+         o  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||
+`, "success");
+  unlockAchievement("cow_fan");
+}
+function cmdFortune() {
+  const fortunes = [
+    "A computer once beat me at chess, but it was no match for me at kick boxing.",
+    "To err is human, to forgive is divine. To persist in error is diabolical.",
+    "There are 10 types of people in the world: those who understand binary, and those who don't.",
+    "The best thing about a boolean is even if you are wrong, you are only off by a bit.",
+    "It works on my machine.",
+    "Have you tried turning it off and on again?",
+    "Linux is free only if your time has no value.",
+    "I'd tell you a UDP joke, but you might not get it.",
+    "Real programmers count from 0.",
+    "Eunuchs Programmers use vi.",
+    "Don't worry if it doesn't work right. If everything did, you'd be out of a job.",
+    "It's not a bug, it's a feature.",
+    "Software and cathedrals are much the same - first we build them, then we pray.",
+    "Code is like humor. When you have to explain it, it's bad.",
+    "Optimism is an occupational hazard of programming: feedback is the treatment.",
+    "T E L N E T ... The next best thing to being there.",
+    "You can't spell 'geek' without 'ee'."
+  ];
+  print(fortunes[Math.floor(Math.random() * fortunes.length)], "dim");
+  unlockAchievement("fortune_teller");
+}
+function cmdArch() {
+  print("I use Arch btw", "success");
+  unlockAchievement("arch_user");
+}
+function cmdSl() {
+  print(`
+          (  ) (@@) ( )  (@)  ()    @@    O     @     O     @      O
+        (@@@)
+       (    )
+      (@@@@)
+    (   )
+     ====        ________                ___________
+ _D _|  |_______/        \\__I_I_____===__|_________|
+  | (_)---  |   H\\________/ |   |        =|___ ___|      _________________
+  /     |  |   H  |  |     |   |         ||_| |_||     _|                \\_____A
+ |      |  |   H  |__--------------------| [___] |   =|                        |
+ | ________|___H__/__|_____/[][]~\\_______|       |   -|                        |
+ |/ |   |-----------I_____I [][] []  D   |=======|____|________________________|_
+__/ =| o |=-~\\  /~=|_| =| =|___________|__     |___________________________|
+ |/-=|___|=    ||  |/=|___|=   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\   /|\\
+  \\_/      \\_ /  \\_/      \\_ /   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/
+`, "system");
+  print("Choo choo!", "dim");
+  unlockAchievement("train_spotter");
+}
+function cmdPacman(args) {
+  if (args[0] === "-Syu" || args[0] === "-Sy") {
+    print(":: Synchronizing package databases...", "system");
+    print(" core is up to date", "dim");
+    print(" extra is up to date", "dim");
+    print(" community is up to date", "dim");
+    print(":: Starting full system upgrade...", "system");
+    print(" there is nothing to do", "dim");
+    unlockAchievement("pkg_master");
+  } else if (args[0] === "-S") {
+    print(`error: target not found: ${args[1] || ""}`, "error");
+  } else {
+    print(`
+ .--.
+/ _.-' .-.  .-.  .-.
+\\  '-. '-'  '-'  '-'
+ '--'
+`.slice(1), "system");
+  }
+}
+function cmdNyanCat() {
+  print("Nyan cat...", "system");
+  const p = document.createElement("p");
+  const img = document.createElement("img");
+  img.src = `nyancat.gif`;
+  img.alt = `Nyan cat`;
+  img.addEventListener("load", () => {
+    terminal.scrollTop = terminal.scrollHeight;
+  });
+  img.addEventListener("click", () => {
+    window.open("https://nyan.cat", "_blank");
+  });
+  p.appendChild(img);
+  output.appendChild(p);
+  unlockAchievement("nyan_cat");
+}
 
 // src/game/pong.ts
 function startPong() {
@@ -1690,6 +1815,13 @@ function cmdHelp() {
   if (userLevel < 6)
     return;
   printAvailable("stats", "How many times have you cleared the terminal?");
+  printAvailable("apt [moo]", "Use apt");
+  printAvailable("cowsay [text]", "Use cowsay");
+  printAvailable("fortune", "Get a random fortune");
+  printAvailable("sl", "Steam Locomotive");
+  printAvailable("arch", "Use Arch");
+  printAvailable("pacman [-Syu]", "Package Manager");
+  printAvailable("nyan", "Nyan Cat");
 }
 
 // src/commands/info.ts
@@ -1918,6 +2050,13 @@ var registry = {
   coinflip: { fn: () => cmdCoinflip() },
   42: { fn: () => cmd42() },
   konami: { fn: () => cmdKonami() },
+  apt: { fn: ({ args }) => cmdApt(args) },
+  cowsay: { fn: ({ fullArgs }) => cmdCowSay(fullArgs) },
+  fortune: { fn: () => cmdFortune() },
+  arch: { fn: () => cmdArch() },
+  sl: { fn: () => cmdSl() },
+  pacman: { fn: ({ args }) => cmdPacman(args) },
+  nyan: { aliases: ["nyan-cat"], fn: () => cmdNyanCat() },
   "add-xp": { fn: ({ args }) => cmdXp(args[0]) },
   "set-achievement": { fn: ({ args }) => cmdSetAchievement(args[0]) }
 };
