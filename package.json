@@ -19,6 +19,6 @@
 		"typescript": "*"
 	},
 	"dependencies": {
-		"@wxn0brp/flanker-ui": "^0.4.6"
+		"@wxn0brp/flanker-ui": "^0.5.0"
 	}
 }
