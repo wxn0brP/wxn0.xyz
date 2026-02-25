@@ -1,78 +1,159 @@
 // node_modules/@wxn0brp/flanker-ui/dist/html.js
-(() => {
-  var M = Object.defineProperty;
-  var a = (t, e) => M(t, "name", { value: e, configurable: true });
-  var s = { html(t) {
-    return t !== undefined ? (this.innerHTML = t, this) : this.innerHTML;
-  }, v(t) {
-    return t !== undefined ? (this.value = t, this) : this.value;
-  }, on(t, e) {
-    return this.addEventListener(t, e), this;
-  }, css(t, e = null) {
-    return typeof t == "string" ? e !== null ? this.style[t] = e : this.style.cssText = t : Object.assign(this.style, t), this;
-  }, attrib(t, e = null) {
-    return e !== null ? (this.setAttribute(t, e), this) : this.getAttribute(t) || "";
-  }, clA(...t) {
-    return this.classList.add(...t), this;
-  }, clR(...t) {
-    return this.classList.remove(...t), this;
-  }, clT(t, e) {
-    return this.classList.toggle(t, e), this;
-  }, animateFade(t, e = {}) {
-    let { time: n = 200, cb: i } = e, r = this, l = t === 0 ? 1 : 0, m = Math.min(1, Math.max(0, t)), u = performance.now();
-    r.style.opacity = m.toString();
-    function h(d) {
-      let T = d - u, o = Math.min(T / n, 1), L = m + (l - m) * o;
-      r.style.opacity = L.toString(), o < 1 ? requestAnimationFrame(h) : (r.style.opacity = l.toString(), i?.());
+var proto = {
+  html(v) {
+    if (v !== undefined) {
+      this.innerHTML = v;
+      return this;
+    } else {
+      return this.innerHTML;
     }
-    return a(h, "step"), requestAnimationFrame(h), this;
-  }, fadeIn(...t) {
-    let e = c({ display: "string", cb: "function", time: "number" }, t), { display: n = "block" } = e;
-    return this.css("display", n), this.animateFade(0, e), this.fade = true, this;
-  }, fadeOut(...t) {
-    let e = c({ cb: "function", time: "number" }, t), n = e.time ?? 300;
-    return e.time = n, this.animateFade(1, { ...e, cb: a(() => {
-      this.css("display", "none"), e.cb?.();
-    }, "cb") }), this.fade = false, this;
-  }, async fadeInP(...t) {
-    return new Promise((e) => {
-      this.fadeIn(...t, () => e(this));
+  },
+  v(v) {
+    if (v !== undefined) {
+      this.value = v;
+      return this;
+    } else {
+      return this.value;
+    }
+  },
+  on(event, fn) {
+    this.addEventListener(event, fn);
+    return this;
+  },
+  css(style, val = null) {
+    if (typeof style === "string") {
+      if (val !== null) {
+        this.style[style] = val;
+      } else {
+        this.style.cssText = style;
+      }
+    } else {
+      Object.assign(this.style, style);
+    }
+    return this;
+  },
+  attrib(att, arg = null) {
+    if (arg !== null) {
+      this.setAttribute(att, arg);
+      return this;
+    } else {
+      return this.getAttribute(att) || "";
+    }
+  },
+  clA(...arg) {
+    this.classList.add(...arg);
+    return this;
+  },
+  clR(...arg) {
+    this.classList.remove(...arg);
+    return this;
+  },
+  clT(className, force) {
+    this.classList.toggle(className, force);
+    return this;
+  },
+  animateFade(from, options = {}) {
+    const { time = 200, cb } = options;
+    const element = this;
+    const targetOpacity = from === 0 ? 1 : 0;
+    const startOpacity = Math.min(1, Math.max(0, from));
+    const startTime = performance.now();
+    element.style.opacity = startOpacity.toString();
+    function step(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / time, 1);
+      const currentOpacity = startOpacity + (targetOpacity - startOpacity) * progress;
+      element.style.opacity = currentOpacity.toString();
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        element.style.opacity = targetOpacity.toString();
+        cb?.();
+      }
+    }
+    requestAnimationFrame(step);
+    return this;
+  },
+  fadeIn(...args) {
+    const opts = convert({
+      display: "string",
+      cb: "function",
+      time: "number"
+    }, args);
+    let { display = "block" } = opts;
+    this.css("display", display);
+    this.animateFade(0, opts);
+    this.fade = true;
+    return this;
+  },
+  fadeOut(...args) {
+    const opts = convert({
+      cb: "function",
+      time: "number"
+    }, args);
+    const time = opts.time ?? 300;
+    opts.time = time;
+    this.animateFade(1, {
+      ...opts,
+      cb: () => {
+        this.css("display", "none");
+        opts.cb?.();
+      }
     });
-  }, async fadeOutP(...t) {
-    return new Promise((e) => {
-      this.fadeOut(...t, () => e(this));
+    this.fade = false;
+    return this;
+  },
+  async fadeInP(...args) {
+    return new Promise((resolve) => {
+      this.fadeIn(...args, () => resolve(this));
     });
-  }, fade: true, fadeToggle() {
-    return this.fade ? this.fadeOut() : this.fadeIn(), this;
-  }, add(t) {
-    return this.appendChild(t), this;
-  }, addUp(t) {
-    return this.insertBefore(t, this.firstChild), this;
-  }, qs(t, e = 0) {
-    return e && (t = `[data-id="${t}"]`), this.querySelector(t);
-  } };
-  s.qi = s.qs;
-  function c(t, e) {
-    let n = {};
-    if (e.length === 0)
-      return n;
-    if (e.every((i) => typeof i == "object"))
-      return Object.assign({}, ...e);
-    for (let i of e)
-      for (let [r, l] of Object.entries(t))
-        if (typeof i === l) {
-          n[r] = i;
-          break;
-        }
-    return n;
+  },
+  async fadeOutP(...args) {
+    return new Promise((resolve) => {
+      this.fadeOut(...args, () => resolve(this));
+    });
+  },
+  fade: true,
+  fadeToggle() {
+    this.fade ? this.fadeOut() : this.fadeIn();
+    return this;
+  },
+  add(child) {
+    this.appendChild(child);
+    return this;
+  },
+  addUp(child) {
+    this.insertBefore(child, this.firstChild);
+    return this;
+  },
+  qs(selector, did = 0) {
+    if (!!did)
+      selector = `[data-id="${selector}"]`;
+    return this.querySelector(selector);
   }
-  a(c, "convert");
-  Object.assign(HTMLElement.prototype, s);
-  Object.assign(document, s);
-  Object.assign(document.body, s);
-  Object.assign(document.documentElement, s);
-  window.qs = window.qi = s.qs.bind(document);
-})();
+};
+proto.qi = proto.qs;
+function convert(opts, args) {
+  const result = {};
+  if (args.length === 0)
+    return result;
+  if (args.every((arg) => typeof arg === "object"))
+    return Object.assign({}, ...args);
+  for (const value of args) {
+    for (const [key, expectedType] of Object.entries(opts)) {
+      if (typeof value === expectedType) {
+        result[key] = value;
+        break;
+      }
+    }
+  }
+  return result;
+}
+Object.assign(HTMLElement.prototype, proto);
+Object.assign(document, proto);
+Object.assign(document.body, proto);
+Object.assign(document.documentElement, proto);
+window.qs = window.qi = proto.qs.bind(document);
 
 // src/shake.ts
 var page = qs("#page");
