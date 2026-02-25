@@ -16,10 +16,10 @@ import {
     cmdKonami,
     cmdMake,
     cmdMatrix,
+    cmdNyanCat,
     cmdPacman,
     cmdSl,
-    cmdSudo,
-    cmdNyanCat
+    cmdSudo
 } from "./fun";
 import { cmdPong, cmdSnake, cmdZhiva } from "./games";
 import { cmdHelp } from "./help";
@@ -27,6 +27,7 @@ import { cmdAchievements, cmdStats, cmdStatus, incrementStats } from "./info";
 import { cmdMail } from "./mail";
 import { cmdNews } from "./news";
 import { cmdClear, cmdExit, cmdReset, cmdReturn, cmdRun, cmdSuglite, cmdWelcome } from "./system";
+import { cmdXkcd } from "./xkcd";
 
 interface CommandContext {
     args: string[];
@@ -122,6 +123,7 @@ const registry: Record<string, CommandDefinition> = {
     sl: { fn: () => cmdSl() },
     pacman: { fn: ({ args }) => cmdPacman(args) },
     nyan: { aliases: ["nyan-cat"], fn: () => cmdNyanCat() },
+    xkcd: { fn: ({ args }) => cmdXkcd(args[0]) },
 
     // Developer
     "add-xp": { fn: ({ args }) => cmdXp(args[0]) },
