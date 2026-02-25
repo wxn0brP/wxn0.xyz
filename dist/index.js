@@ -2073,6 +2073,28 @@ function cmdRun() {
   location.reload();
 }
 
+// src/commands/xkcd.ts
+async function getXkcdImageUrl(comicNumber) {
+  const response = await fetch(`/xkcd.php?i=${comicNumber}`);
+  return response.text();
+}
+async function cmdXkcd(arg) {
+  const num = +arg || Math.floor(Math.random() * 3211) + 1;
+  const imageUrl = await getXkcdImageUrl(num);
+  const p = document.createElement("p");
+  const img = document.createElement("img");
+  img.src = imageUrl;
+  img.alt = `xkcd ${num}`;
+  img.addEventListener("load", () => {
+    terminal.scrollTop = terminal.scrollHeight;
+  });
+  img.addEventListener("click", () => {
+    window.open(`https://xkcd.com/${num}`, "_blank");
+  });
+  p.appendChild(img);
+  output.appendChild(p);
+}
+
 // src/commands/index.ts
 var registry = {
   help: { fn: () => cmdHelp() },
@@ -2146,6 +2168,7 @@ var registry = {
   sl: { fn: () => cmdSl() },
   pacman: { fn: ({ args }) => cmdPacman(args) },
   nyan: { aliases: ["nyan-cat"], fn: () => cmdNyanCat() },
+  xkcd: { fn: ({ args }) => cmdXkcd(args[0]) },
   "add-xp": { fn: ({ args }) => cmdXp(args[0]) },
   "set-achievement": { fn: ({ args }) => cmdSetAchievement(args[0]) }
 };
