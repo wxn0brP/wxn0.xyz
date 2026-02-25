@@ -13,12 +13,19 @@ export function cmdPong() {
     unlockAchievement("pong_player");
 }
 
-export function cmdZhiva(arg: string) {
-    if (!arg) {
+export function cmdZhiva(...args: string[]) {
+    if (!args[0]) {
         print("Usage: zhiva [name]", "error");
         return;
     }
-    let target = arg;
+    let target = args[0];
+    if (target === "start" || target === "r" || target === "run") {
+        if (args[1]) target = args[1];
+        else {
+            print("Usage: zhiva [name]", "error");
+            return;
+        }
+    }
     if (!target.includes("/")) target = `wxn0brP/${target}`;
 
     unlockAchievement("zhiva_user");

@@ -95,7 +95,7 @@ const registry: Record<string, CommandDefinition> = {
     vim: { aliases: ["vi"], fn: () => openVim() },
     snake: { fn: () => cmdSnake() },
     pong: { aliases: ["ping"], fn: () => cmdPong() },
-    zhiva: { fn: ({ args }) => cmdZhiva(args[0]) },
+    zhiva: { fn: ({ args }) => cmdZhiva(...args) },
 
     // System
     clear: { fn: () => cmdClear() },
