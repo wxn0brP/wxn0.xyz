@@ -16,7 +16,7 @@
         "build": "bun build src/index.ts src/shake.ts --outdir dist"
     },
     "devDependencies": {
-        "typescript": "^5"
+        "typescript": "^6.0.0"
     },
     "dependencies": {
         "@wxn0brp/flanker-ui": "^0.4.6"
