@@ -1,24 +1,24 @@
 {
-	"name": "wxn0.xyz",
-	"version": "0.0.1",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"description": "",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/wxn0brP/wxn0.xyz.git"
-	},
-	"homepage": "https://github.com/wxn0brP/wxn0.xyz",
-	"author": "wxn0brP",
-	"license": "MIT",
-	"type": "module",
-	"scripts": {
-		"build": "bun build src/index.ts src/shake.ts --outdir dist"
-	},
-	"devDependencies": {
-		"typescript": "*"
-	},
-	"dependencies": {
-		"@wxn0brp/flanker-ui": "^0.4.6"
-	}
+    "name": "wxn0.xyz",
+    "version": "0.0.1",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "description": "",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/wxn0brP/wxn0.xyz.git"
+    },
+    "homepage": "https://github.com/wxn0brP/wxn0.xyz",
+    "author": "wxn0brP",
+    "license": "MIT",
+    "type": "module",
+    "scripts": {
+        "build": "bun build src/index.ts src/shake.ts --outdir dist"
+    },
+    "devDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@wxn0brp/flanker-ui": "^0.4.6"
+    }
 }
