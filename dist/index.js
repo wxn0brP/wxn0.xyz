@@ -156,7 +156,17 @@ Object.assign(document.documentElement, proto);
 window.qs = window.qi = proto.qs.bind(document);
 
 // node_modules/@wxn0brp/flanker-ui/dist/store.js
-var storeKeys = ["listeners", "value", "notify", "get", "set", "subscribe", "parent", "isStore"];
+var storeKeys = [
+  "listeners",
+  "value",
+  "notify",
+  "get",
+  "getPointer",
+  "set",
+  "subscribe",
+  "parent",
+  "isStore"
+];
 function createStore(schema, parent) {
   const store = {};
   for (const key in schema) {
