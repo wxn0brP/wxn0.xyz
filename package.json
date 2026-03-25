@@ -2,7 +2,6 @@
     "name": "wxn0.xyz",
     "version": "0.0.1",
     "main": "dist/index.js",
-    "types": "dist/index.d.ts",
     "description": "",
     "repository": {
         "type": "git",
@@ -16,9 +15,9 @@
         "build": "bun build src/index.ts src/shake.ts --outdir dist"
     },
     "devDependencies": {
-        "typescript": "^5"
+        "typescript": "^6"
     },
     "dependencies": {
-        "@wxn0brp/flanker-ui": "^0.4.6"
+        "@wxn0brp/flanker-ui": "^0.5.1"
     }
 }
