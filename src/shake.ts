@@ -1,34 +1,57 @@
-import "@wxn0brp/flanker-ui/html";
-const page = qs("#page");
-const terminal = qs("#terminal");
+const page = document.querySelector<HTMLDivElement>("#page");
+const terminal = document.querySelector<HTMLDivElement>("#terminal");
+const container = document.querySelector<HTMLDivElement>("#container");
 
-const START_DELAY = 30_000;
+const textStory = [
+    "Go away.",
+    "Don’t stay here.",
+    "Leave.",
+    "Why are you still here?",
+    "Stop looking.",
+    "I told you to go.",
+    "You don’t listen.",
+    "...fine",
+    "Don’t leave. Darling~~~",
+];
+
+const textRandom = [
+    "Don’t look away.",
+    "I’m right here.",
+    "Stay close.",
+    "You’re not leaving.",
+    "I found you again.",
+    "Mine.",
+    "💜💜💜",
+    "Don’t disappear.",
+    "I won’t let you go.",
+];
+
+let clicked = 0;
 const GLITCH_TIME = 1_600;
-let firstRunOfTheDayTimeout: number;
+
+function randomColor(el: HTMLElement) {
+    el.style.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+}
 
 function loadTerminal() {
     terminal.style.display = "";
     page.remove();
 
-    qs<HTMLCanvasElement>("#bg-effect")?.remove();
-    qs<HTMLLinkElement>("#style").href = "terminal.css";
-    qs("title").html("Explorer - wxn0.xyz");
+    document.querySelector<HTMLCanvasElement>("#bg-effect")?.remove();
+    document.querySelector<HTMLLinkElement>("#style").href = "terminal.css";
+    document.querySelector<HTMLDivElement>("title").innerHTML = "Explorer - wxn0.xyz";
 
     const script = document.createElement("script");
     script.src = "./dist/index.js";
     document.body.appendChild(script);
-    localStorage.removeItem("notHappened");
 }
 
 function loadAnimation() {
     page.classList.add("glitch", "shake");
-    document.querySelectorAll<HTMLElement>(".glitch-color").forEach((el) => {
-        el.style.color = "red";
-    });
     document.querySelectorAll<HTMLElement>("*").forEach((el) => {
         if (Math.random() < 0.5) {
             el.classList.add("glitch-color");
-            el.style.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+            randomColor(el);
         }
     });
 
@@ -43,57 +66,51 @@ function loadAnimation() {
             el.classList.remove("glitch-color");
             el.style.color = "";
         });
-        // Analytics: trigger endpoint only for real users, not bots
-        const codes = [20 * 5 + 1, "n", 103, 97, 103, "e", 109, 101, 110, 116, 7 * 6 + 2 * 2, 112, "h", 112];
-        const url = codes.map(code => typeof code === "string" ? code : String.fromCharCode(code)).join("");
-        fetch("/" + url, { method: "POST" });
     }, GLITCH_TIME);
 }
 
-function typeWriter(text: string, element: HTMLElement, speed: number = 100) {
-    let i = 0;
-    element.innerHTML = "";
-    function type() {
-        if (i < text.length) {
-            element.innerHTML += text.charAt(i);
-            i++;
-            setTimeout(type, speed + (Math.random() * 50 - 25));
+function addRandomText(i: number) {
+    const p = document.createElement("p");
+    p.innerHTML = textRandom[i % textRandom.length];
+    container.appendChild(p);
+
+    const scale = 1 + Math.pow(i / 60, 2) * 4;
+
+    Object.assign(p.style, {
+        position: "fixed",
+        top: `${Math.random() * (window.innerHeight - 100)}px`,
+        left: `${Math.random() * (window.innerWidth - 100)}px`,
+        fontSize: `${scale}rem`,
+    });
+
+    if (Math.random() < 0.8) randomColor(p);
+}
+
+container.addEventListener("click", () => {
+    if (clicked > textStory.length) return;
+    if (clicked === textStory.length) {
+        for (let i = 0; i < 60; i++) {
+            const t = Math.round(4500 * Math.pow((i + 1) / 60, 0.92));
+            setTimeout(() => addRandomText(i), t);
         }
+
+        setTimeout(() => {
+            loadAnimation();
+        }, 4_600);
+    } else {
+        const p = document.createElement("p");
+        p.innerHTML = textStory[clicked];
+        container.appendChild(p);
     }
-    type();
-}
+    clicked++;
+    if (clicked === 2) {
+        if (document.fullscreenElement) return;
+        const e = document.documentElement as any;
+        if (e.requestFullscreen) e.requestFullscreen();
+        else if (e.webkitRequestFullscreen) e.webkitRequestFullscreen();
+        else if (e.msRequestFullscreen) e.msRequestFullscreen();
 
-const run = localStorage.getItem("run");
-const firstRunOfTheDay = !run || Date.now() > Number(+run) + 24 * 60 * 60 * 1000;
-
-const titleElement = qs("#typewriter");
-if (titleElement) typeWriter("wxn0.xyz", titleElement);
-
-if (localStorage.getItem("notHappened")) {
-    document.addEventListener("dblclick", () => loadAnimation(), { once: true });
-    const stick = qs("#stick");
-    if (stick) stick.innerHTML = "Double-click to initialize protocol...";
-    console.log("Mode", "Not happened");
-}
-else if (firstRunOfTheDay) {
-    firstRunOfTheDayTimeout = setTimeout(loadAnimation, START_DELAY);
-    console.log("Mode", "First run of the day");
-
-    qs(".glitch-hover")?.addEventListener("mouseover", () => {
-        loadAnimation()
-        clearTimeout(firstRunOfTheDayTimeout);
-    }, { once: true });
-} else {
-    loadTerminal();
-}
-
-(window as any).goFullscreen = () => {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-    } else if ((elem as any).webkitRequestFullscreen) {
-        (elem as any).webkitRequestFullscreen();
-    } else if ((elem as any).msRequestFullscreen) {
-        (elem as any).msRequestFullscreen();
     }
-}
+});
+
+export { }
