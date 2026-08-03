@@ -80,7 +80,7 @@ var proto = {
       cb: "function",
       time: "number"
     }, args);
-    let { display = "block" } = opts;
+    const { display = "block" } = opts;
     this.css("display", display);
     this.animateFade(0, opts);
     this.fade = true;
@@ -127,7 +127,7 @@ var proto = {
     return this;
   },
   qs(selector, did = 0) {
-    if (!!did)
+    if (did)
       selector = `[data-id="${selector}"]`;
     return this.querySelector(selector);
   }
@@ -155,6 +155,169 @@ Object.assign(document.body, proto);
 Object.assign(document.documentElement, proto);
 window.qs = window.qi = proto.qs.bind(document);
 
+// node_modules/@wxn0brp/flanker-ui/dist/component/helpers.js
+function watchInput(el, store, setFromElement = false) {
+  if (setFromElement)
+    store.set(el.value);
+  else
+    el.value = store.get();
+  el.addEventListener("input", () => {
+    store.set(el.value);
+  });
+  store.subscribe((value) => {
+    if (el.value !== value)
+      el.value = value;
+  });
+}
+function watchCheckbox(el, store, setFromElement = false) {
+  if (setFromElement)
+    store.set(el.checked);
+  else
+    el.checked = store.get();
+  el.addEventListener("change", () => {
+    store.set(el.checked);
+  });
+  store.subscribe((value) => {
+    if (el.checked !== value)
+      el.checked = value;
+  });
+}
+function watchNumber(el, store, setFromElement = false) {
+  if (setFromElement)
+    store.set(el.valueAsNumber);
+  else
+    el.valueAsNumber = store.get();
+  el.addEventListener("input", () => {
+    store.set(el.valueAsNumber);
+  });
+  store.subscribe((value) => {
+    if (el.valueAsNumber !== value)
+      el.valueAsNumber = value;
+  });
+}
+// node_modules/@wxn0brp/flanker-ui/dist/component/view.js
+var METADATA_KEY = Symbol.metadata ?? Symbol.for("Symbol.metadata");
+function getMeta(ctor) {
+  return ctor?.[METADATA_KEY] ?? {};
+}
+
+class UiView {
+  element;
+  root;
+  _store = new Map;
+  _updateScheduled = false;
+  _mounted = false;
+  mount() {
+    if (this._mounted)
+      return;
+    this._mounted = true;
+    if (this.root) {
+      this.element = typeof this.root === "string" ? document.querySelector(this.root) : this.root;
+    }
+    const meta = getMeta(this.constructor);
+    const hides = meta._declaredHides ?? new Map;
+    for (const [key, { cell, negate }] of hides) {
+      const el = key === null ? this.element : this[key];
+      if (!el)
+        continue;
+      cell.subscribe((visible) => {
+        const show = negate ? !visible : visible;
+        el.style.display = show ? "" : "none";
+      });
+    }
+    const classes = meta._declaredClasses ?? new Map;
+    for (const [key, { className, cell, negate }] of classes) {
+      const el = key === null ? this.element : this[key];
+      if (!el)
+        continue;
+      cell.subscribe((val) => {
+        const add = negate ? !val : val;
+        el.classList.toggle(className, add);
+      });
+    }
+    const attrs = meta._declaredAttrs ?? new Map;
+    for (const [key, { attrName, cell, negate }] of attrs) {
+      const el = key === null ? this.element : this[key];
+      if (!el)
+        continue;
+      cell.subscribe((val) => {
+        const shouldSet = negate ? !val : val;
+        if (shouldSet === null || shouldSet === undefined || shouldSet === false) {
+          el.removeAttribute(attrName);
+        } else {
+          el.setAttribute(attrName, String(shouldSet));
+        }
+      });
+    }
+    const events = meta._declaredEvents ?? new Map;
+    for (const [methodName, { event, selector }] of events) {
+      const handler = this[methodName].bind(this);
+      if (this.element) {
+        if (selector) {
+          this.element.addEventListener(event, (e) => {
+            const match = e.target.closest(selector);
+            if (match && this.element.contains(match)) {
+              handler(match, e);
+            }
+          });
+        } else {
+          this.element.addEventListener(event, handler);
+        }
+      }
+    }
+    const binds = meta._declaredBinds ?? [];
+    for (const { propName, selector, type } of binds) {
+      const el = this.element.querySelector(selector);
+      if (!el)
+        continue;
+      const cell = this._store.get(propName);
+      if (!cell)
+        continue;
+      switch (type) {
+        case "value": {
+          watchInput(el, cell, true);
+          break;
+        }
+        case "number": {
+          watchNumber(el, cell, true);
+          break;
+        }
+        case "checked": {
+          watchCheckbox(el, cell, true);
+          break;
+        }
+        case "text": {
+          el.textContent = cell.get() ?? "";
+          cell.subscribe((v) => {
+            el.textContent = v ?? "";
+          });
+          break;
+        }
+        case "html": {
+          el.innerHTML = cell.get() ?? "";
+          cell.subscribe((v) => {
+            el.innerHTML = v ?? "";
+          });
+          break;
+        }
+      }
+    }
+    this.mounted();
+  }
+  mounted() {}
+  requestUpdate() {
+    if (!this.element)
+      return;
+    if (this._updateScheduled)
+      return;
+    this._updateScheduled = true;
+    Promise.resolve().then(() => {
+      this._updateScheduled = false;
+      this.onUpdate();
+    });
+  }
+  onUpdate() {}
+}
 // node_modules/@wxn0brp/flanker-ui/dist/store.js
 var storeKeys = [
   "listeners",
@@ -170,7 +333,7 @@ var storeKeys = [
 function createStore(schema, parent) {
   const store = {};
   for (const key in schema) {
-    if (schema.hasOwnProperty(key)) {
+    if (Object.hasOwn(schema, key)) {
       const isStore = typeof schema[key] === "object" && !Array.isArray(schema[key]) && schema[key] !== null;
       if (isStore) {
         store[key] = createStore(schema[key], store);
@@ -195,7 +358,7 @@ function createStore(schema, parent) {
     for (const key in store) {
       if (storeKeys.includes(key))
         continue;
-      if (store.hasOwnProperty(key)) {
+      if (Object.hasOwn(store, key)) {
         obj[key] = store[key].get();
       }
     }
@@ -206,7 +369,7 @@ function createStore(schema, parent) {
     for (const key in store) {
       if (storeKeys.includes(key))
         continue;
-      if (store.hasOwnProperty(key)) {
+      if (Object.hasOwn(store, key)) {
         obj[key] = store[key];
       }
     }
@@ -217,7 +380,7 @@ function createStore(schema, parent) {
       if (storeKeys.includes(key)) {
         throw new Error(`Reserved key: ${key}`);
       }
-      if (!store.hasOwnProperty(key)) {
+      if (!Object.hasOwn(store, key)) {
         throw new Error(`Unknown key: ${key}`);
       }
       const target = store[key];
@@ -269,6 +432,18 @@ class ReactiveCell {
     return this;
   }
 }
+
+// node_modules/@wxn0brp/flanker-ui/dist/component/index.js
+var fetchVQL = window?.VQLClient?.fetchVQL;
+// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
+function incrementCell(cell, by = 1) {
+  cell.set(cell.get() + by);
+  return cell;
+}
+function decrementCell(cell, by = 1) {
+  cell.set(cell.get() - by);
+  return cell;
+}
 // node_modules/@wxn0brp/flanker-ui/dist/utils.js
 function rand(min, max) {
   return Math.round(Math.random() * (max - min) + min);
@@ -288,27 +463,35 @@ function delay(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
 
-// node_modules/@wxn0brp/flanker-ui/dist/component/index.js
-var fetchVQL = window?.VQLClient?.fetchVQL;
-// node_modules/@wxn0brp/flanker-ui/dist/storeUtils.js
-function incrementCell(cell, by = 1) {
-  cell.set(cell.get() + by);
-  return cell;
-}
-function decrementCell(cell, by = 1) {
-  cell.set(cell.get() - by);
-  return cell;
-}
-
 // node_modules/@wxn0brp/flanker-ui/dist/index.js
 globalThis.lo = console.log;
 
 // src/vars.ts
 var links = [
-  { level: 1, name: "Homepage/Developer Website", url: "https://wxn0brp.github.io", displayed: false },
-  { level: 2, name: "GitHub Profile", url: "https://github.com/wxn0brP", displayed: false },
-  { level: 3, name: "ValtheraDB", url: "https://github.com/wxn0brP/ValtheraDB", displayed: false },
-  { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", displayed: false }
+  {
+    level: 1,
+    name: "Homepage/Developer Website",
+    url: "https://wxn0brp.github.io",
+    displayed: false
+  },
+  {
+    level: 2,
+    name: "GitHub Profile",
+    url: "https://github.com/wxn0brP",
+    displayed: false
+  },
+  {
+    level: 3,
+    name: "ValtheraDB",
+    url: "https://github.com/wxn0brP/ValtheraDB",
+    displayed: false
+  },
+  {
+    level: 4,
+    name: "VQL",
+    url: "https://github.com/wxn0brP/VQL",
+    displayed: false
+  }
 ];
 var $store = createStore({
   xp: 0,
@@ -487,7 +670,10 @@ async function sendMail(mailDef) {
     timestamp: Date.now(),
     read: false
   };
-  $store.mails.set([newMail, ...mails]);
+  $store.mails.set([
+    newMail,
+    ...mails
+  ]);
   print("<br>\uD83D\uDCE8 <span class='success'>You have a new message!</span> Type 'mail' to read.<br>", "system");
   saveGame();
 }
@@ -559,50 +745,298 @@ function addXp(xp) {
 
 // src/achievements.ts
 var achievements = [
-  { id: "first_steps", name: "First Steps", description: "Run your first command.", xp: 10 },
-  { id: "status_check", name: "Status Check", description: "Check your status.", xp: 20 },
-  { id: "hacker", name: "Script Kiddie", description: "Complete your first hack.", xp: 50 },
-  { id: "link_finder", name: "Link Finder", description: "View available links.", xp: 25 },
-  { id: "stats_check", name: "Stats Check", description: "Check your stats.", xp: 25 },
-  { id: "developer", name: "Be a developer", description: "See source code.", xp: 25 },
-  { id: "miner", name: "Crypto Miner", description: "Mine for XP successfully.", xp: 40, requiredLevel: 1 },
-  { id: "time_traveler", name: "Time Traveler", description: "Check the current date and time.", xp: 15, requiredLevel: 1 },
-  { id: "self_aware", name: "Self Aware", description: "Check who you are.", xp: 15, requiredLevel: 1 },
-  { id: "informed", name: "Informed Citizen", description: "Check the latest news.", xp: 15, requiredLevel: 0 },
-  { id: "explorer", name: "Explorer", description: "List directory contents.", xp: 20, requiredLevel: 2 },
-  { id: "navigator", name: "Navigator", description: "Change directory 5 times.", xp: 25, requiredLevel: 2 },
-  { id: "reader", name: "Reader", description: "Read a file with cat.", xp: 20, requiredLevel: 2 },
-  { id: "snake_player", name: "Snake Charmer", description: "Play Snake.", xp: 30, requiredLevel: 3 },
-  { id: "snake_master", name: "Snake Master", description: "Score 20+ in Snake.", xp: 100, requiredLevel: 3 },
-  { id: "vim_brave", name: "Brave Soul", description: "Enter vim (congratulations on your courage or your stupidity).", xp: 25, requiredLevel: 3 },
-  { id: "vim_survivor", name: "Vim Survivor", description: "Exit vim (congratulations on your persistence).", xp: 50, requiredLevel: 3 },
-  { id: "pong_player", name: "Pong Rookie", description: "Play Pong.", xp: 30, requiredLevel: 4 },
-  { id: "pong_winner", name: "Pong Champion", description: "Score 10+ points in Pong.", xp: 100, requiredLevel: 4 },
-  { id: "coin_flipper", name: "Gambler", description: "Flip a coin 10 times.", xp: 30, requiredLevel: 5 },
-  { id: "matrix_fan", name: "Matrix Fan", description: "Enter the Matrix.", xp: 25, requiredLevel: 5 },
-  { id: "apt_fan", name: "APT Fan", description: "Use apt.", xp: 25 },
-  { id: "cow_fan", name: "Cow Fan", description: "Use cowsay.", xp: 25 },
-  { id: "fortune_teller", name: "Fortune Cookie", description: "Read a fortune.", xp: 20 },
-  { id: "arch_user", name: "Arch User", description: "Announce that you use Arch.", xp: 20 },
-  { id: "train_spotter", name: "Train Spotter", description: "Watch the train.", xp: 40 },
-  { id: "pkg_master", name: "Package Master", description: "Update the system.", xp: 30 },
-  { id: "nyan_cat", name: "Nyan Cat", description: "Watch Nyan Cat.", xp: 25 },
-  { id: "hacker_pro", name: "Hacker Pro", description: "Complete 10 successful hacks.", xp: 100 },
-  { id: "elite_hacker", name: "Elite Hacker", description: "Complete 50 successful hacks.", xp: 250 },
-  { id: "mining_tycoon", name: "Mining Tycoon", description: "Successfully mine 20 times.", xp: 150, requiredLevel: 1 },
-  { id: "level_5", name: "Rising Star", description: "Reach level 5.", xp: 50 },
-  { id: "level_10", name: "Veteran", description: "Reach level 10.", xp: 100 },
-  { id: "level_20", name: "Master", description: "Reach level 20.", xp: 200 },
-  { id: "hello_world", name: "Friendly", description: "Say hello to the system.", xp: 15, hidden: true },
-  { id: "curious", name: "Polite Hacker", description: "Ask nicely for a sandwich.", xp: 30, hidden: true },
-  { id: "god_mode", name: "God Mode", description: "Unlock unlimited power.", xp: 100, hidden: true },
-  { id: "escape_artist", name: "Escape Artist", description: "Try to exit 5 times.", xp: 40, hidden: true },
-  { id: "destructor", name: "Destructor", description: "Try to delete system files.", xp: 50, hidden: true },
-  { id: "echo_chamber", name: "Echo Chamber", description: "Use echo 10 times.", xp: 30, hidden: true, requiredLevel: 1 },
-  { id: "persistent", name: "Persistent", description: "Try the same failed command 3 times in a row.", xp: 25, hidden: true },
-  { id: "clean_freak", name: "Clean Freak", description: "Clear the terminal 10 times.", xp: 35, hidden: true },
-  { id: "answer_seeker", name: "Answer Seeker", description: "Discover the answer to everything.", xp: 42, hidden: true },
-  { id: "zhiva_user", name: "Zhiva User", description: "Launch Zhiva app.", xp: 40, hidden: true, requiredLevel: 3 },
+  {
+    id: "first_steps",
+    name: "First Steps",
+    description: "Run your first command.",
+    xp: 10
+  },
+  {
+    id: "status_check",
+    name: "Status Check",
+    description: "Check your status.",
+    xp: 20
+  },
+  {
+    id: "hacker",
+    name: "Script Kiddie",
+    description: "Complete your first hack.",
+    xp: 50
+  },
+  {
+    id: "link_finder",
+    name: "Link Finder",
+    description: "View available links.",
+    xp: 25
+  },
+  {
+    id: "stats_check",
+    name: "Stats Check",
+    description: "Check your stats.",
+    xp: 25
+  },
+  {
+    id: "developer",
+    name: "Be a developer",
+    description: "See source code.",
+    xp: 25
+  },
+  {
+    id: "miner",
+    name: "Crypto Miner",
+    description: "Mine for XP successfully.",
+    xp: 40,
+    requiredLevel: 1
+  },
+  {
+    id: "time_traveler",
+    name: "Time Traveler",
+    description: "Check the current date and time.",
+    xp: 15,
+    requiredLevel: 1
+  },
+  {
+    id: "self_aware",
+    name: "Self Aware",
+    description: "Check who you are.",
+    xp: 15,
+    requiredLevel: 1
+  },
+  {
+    id: "informed",
+    name: "Informed Citizen",
+    description: "Check the latest news.",
+    xp: 15,
+    requiredLevel: 0
+  },
+  {
+    id: "explorer",
+    name: "Explorer",
+    description: "List directory contents.",
+    xp: 20,
+    requiredLevel: 2
+  },
+  {
+    id: "navigator",
+    name: "Navigator",
+    description: "Change directory 5 times.",
+    xp: 25,
+    requiredLevel: 2
+  },
+  {
+    id: "reader",
+    name: "Reader",
+    description: "Read a file with cat.",
+    xp: 20,
+    requiredLevel: 2
+  },
+  {
+    id: "snake_player",
+    name: "Snake Charmer",
+    description: "Play Snake.",
+    xp: 30,
+    requiredLevel: 3
+  },
+  {
+    id: "snake_master",
+    name: "Snake Master",
+    description: "Score 20+ in Snake.",
+    xp: 100,
+    requiredLevel: 3
+  },
+  {
+    id: "vim_brave",
+    name: "Brave Soul",
+    description: "Enter vim (congratulations on your courage or your stupidity).",
+    xp: 25,
+    requiredLevel: 3
+  },
+  {
+    id: "vim_survivor",
+    name: "Vim Survivor",
+    description: "Exit vim (congratulations on your persistence).",
+    xp: 50,
+    requiredLevel: 3
+  },
+  {
+    id: "pong_player",
+    name: "Pong Rookie",
+    description: "Play Pong.",
+    xp: 30,
+    requiredLevel: 4
+  },
+  {
+    id: "pong_winner",
+    name: "Pong Champion",
+    description: "Score 10+ points in Pong.",
+    xp: 100,
+    requiredLevel: 4
+  },
+  {
+    id: "coin_flipper",
+    name: "Gambler",
+    description: "Flip a coin 10 times.",
+    xp: 30,
+    requiredLevel: 5
+  },
+  {
+    id: "matrix_fan",
+    name: "Matrix Fan",
+    description: "Enter the Matrix.",
+    xp: 25,
+    requiredLevel: 5
+  },
+  {
+    id: "apt_fan",
+    name: "APT Fan",
+    description: "Use apt.",
+    xp: 25
+  },
+  {
+    id: "cow_fan",
+    name: "Cow Fan",
+    description: "Use cowsay.",
+    xp: 25
+  },
+  {
+    id: "fortune_teller",
+    name: "Fortune Cookie",
+    description: "Read a fortune.",
+    xp: 20
+  },
+  {
+    id: "arch_user",
+    name: "Arch User",
+    description: "Announce that you use Arch.",
+    xp: 20
+  },
+  {
+    id: "train_spotter",
+    name: "Train Spotter",
+    description: "Watch the train.",
+    xp: 40
+  },
+  {
+    id: "pkg_master",
+    name: "Package Master",
+    description: "Update the system.",
+    xp: 30
+  },
+  {
+    id: "nyan_cat",
+    name: "Nyan Cat",
+    description: "Watch Nyan Cat.",
+    xp: 25
+  },
+  {
+    id: "hacker_pro",
+    name: "Hacker Pro",
+    description: "Complete 10 successful hacks.",
+    xp: 100
+  },
+  {
+    id: "elite_hacker",
+    name: "Elite Hacker",
+    description: "Complete 50 successful hacks.",
+    xp: 250
+  },
+  {
+    id: "mining_tycoon",
+    name: "Mining Tycoon",
+    description: "Successfully mine 20 times.",
+    xp: 150,
+    requiredLevel: 1
+  },
+  {
+    id: "level_5",
+    name: "Rising Star",
+    description: "Reach level 5.",
+    xp: 50
+  },
+  {
+    id: "level_10",
+    name: "Veteran",
+    description: "Reach level 10.",
+    xp: 100
+  },
+  {
+    id: "level_20",
+    name: "Master",
+    description: "Reach level 20.",
+    xp: 200
+  },
+  {
+    id: "hello_world",
+    name: "Friendly",
+    description: "Say hello to the system.",
+    xp: 15,
+    hidden: true
+  },
+  {
+    id: "curious",
+    name: "Polite Hacker",
+    description: "Ask nicely for a sandwich.",
+    xp: 30,
+    hidden: true
+  },
+  {
+    id: "god_mode",
+    name: "God Mode",
+    description: "Unlock unlimited power.",
+    xp: 100,
+    hidden: true
+  },
+  {
+    id: "escape_artist",
+    name: "Escape Artist",
+    description: "Try to exit 5 times.",
+    xp: 40,
+    hidden: true
+  },
+  {
+    id: "destructor",
+    name: "Destructor",
+    description: "Try to delete system files.",
+    xp: 50,
+    hidden: true
+  },
+  {
+    id: "echo_chamber",
+    name: "Echo Chamber",
+    description: "Use echo 10 times.",
+    xp: 30,
+    hidden: true,
+    requiredLevel: 1
+  },
+  {
+    id: "persistent",
+    name: "Persistent",
+    description: "Try the same failed command 3 times in a row.",
+    xp: 25,
+    hidden: true
+  },
+  {
+    id: "clean_freak",
+    name: "Clean Freak",
+    description: "Clear the terminal 10 times.",
+    xp: 35,
+    hidden: true
+  },
+  {
+    id: "answer_seeker",
+    name: "Answer Seeker",
+    description: "Discover the answer to everything.",
+    xp: 42,
+    hidden: true
+  },
+  {
+    id: "zhiva_user",
+    name: "Zhiva User",
+    description: "Launch Zhiva app.",
+    xp: 40,
+    hidden: true,
+    requiredLevel: 3
+  },
   {
     id: "dev_plus_plus",
     name: "Dev++",
@@ -610,7 +1044,13 @@ var achievements = [
     hidden: true,
     description: "You were never meant to earn this. You found it by reading the source code."
   },
-  { id: "completionist", name: "Completionist", description: "Unlock all non-hidden achievements.", xp: 500, hidden: true }
+  {
+    id: "completionist",
+    name: "Completionist",
+    description: "Unlock all non-hidden achievements.",
+    xp: 500,
+    hidden: true
+  }
 ];
 var achievementCounters = {
   cdCount: 0,
@@ -630,7 +1070,10 @@ function unlockAchievement(id) {
   const achievement = achievements.find((a) => a.id === id);
   if (!achievement)
     return;
-  $store.achievements.set([...unlocked, id]);
+  $store.achievements.set([
+    ...unlocked,
+    id
+  ]);
   addXp(achievement.xp);
   print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
   print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
@@ -666,13 +1109,19 @@ function getVisibleAchievements() {
     const isUnlocked = unlocked.includes(achievement.id);
     const levelLocked = achievement.requiredLevel !== undefined && currentLevel < achievement.requiredLevel;
     if (isUnlocked) {
-      visible.push({ ...achievement, unlocked: true });
+      visible.push({
+        ...achievement,
+        unlocked: true
+      });
     } else if (achievement.hidden) {
       continue;
     } else if (levelLocked) {
       continue;
     } else if (nextCount < 5 && (achievement.requiredLevel === undefined || achievement.requiredLevel <= currentLevel)) {
-      visible.push({ ...achievement, unlocked: false });
+      visible.push({
+        ...achievement,
+        unlocked: false
+      });
       nextCount++;
     }
   }
@@ -688,17 +1137,50 @@ var targets = [
   "research-lab-gamma"
 ];
 var vulnerabilities = [
-  { name: "buffer overflow", command: "exploit buffer_overflow" },
-  { name: "SQL injection", command: "exploit sql_injection" },
-  { name: "cross-site scripting", command: "exploit xss" },
-  { name: "rootkit", command: "install rootkit" },
-  { name: "zero-day", command: "deploy zero_day" },
-  { name: "malware", command: "install malware" },
-  { name: "System32", command: "remove System32" },
-  { name: "kernel panic", command: "crash kernel" },
-  { name: "blue screen of death", command: "crash blue_screen" },
-  { name: "virus", command: "reinstall virus" },
-  { name: "worm", command: "feed worm" }
+  {
+    name: "buffer overflow",
+    command: "exploit buffer_overflow"
+  },
+  {
+    name: "SQL injection",
+    command: "exploit sql_injection"
+  },
+  {
+    name: "cross-site scripting",
+    command: "exploit xss"
+  },
+  {
+    name: "rootkit",
+    command: "install rootkit"
+  },
+  {
+    name: "zero-day",
+    command: "deploy zero_day"
+  },
+  {
+    name: "malware",
+    command: "install malware"
+  },
+  {
+    name: "System32",
+    command: "remove System32"
+  },
+  {
+    name: "kernel panic",
+    command: "crash kernel"
+  },
+  {
+    name: "blue screen of death",
+    command: "crash blue_screen"
+  },
+  {
+    name: "virus",
+    command: "reinstall virus"
+  },
+  {
+    name: "worm",
+    command: "feed worm"
+  }
 ];
 var hackingMission = {
   active: false,
@@ -795,7 +1277,10 @@ async function startMining() {
 // src/filesystem.ts
 class VirtualFileSystem {
   root = null;
-  currentPath = ["home", "guest"];
+  currentPath = [
+    "home",
+    "guest"
+  ];
   loaded = false;
   constructor() {
     this.load();
@@ -813,7 +1298,11 @@ class VirtualFileSystem {
   }
   parseNode(raw, name) {
     if (typeof raw === "string") {
-      return { type: "file", src: raw, name };
+      return {
+        type: "file",
+        src: raw,
+        name
+      };
     }
     const children = {};
     const isHidden = raw["$hidden"] === true;
@@ -824,7 +1313,12 @@ class VirtualFileSystem {
       childNode.parent = undefined;
       children[key] = childNode;
     }
-    return { type: "dir", children, hidden: isHidden, name };
+    return {
+      type: "dir",
+      children,
+      hidden: isHidden,
+      name
+    };
   }
   getCWD() {
     return "/" + this.currentPath.join("/");
@@ -832,8 +1326,10 @@ class VirtualFileSystem {
   resolvePath(path) {
     if (!this.loaded || !this.root)
       return null;
-    let parts = path.split("/").filter(Boolean);
-    let p = path.startsWith("/") ? [] : [...this.currentPath];
+    const parts = path.split("/").filter(Boolean);
+    const p = path.startsWith("/") ? [] : [
+      ...this.currentPath
+    ];
     const normalizedPath = [];
     for (const part of p) {
       normalizedPath.push(part);
@@ -916,7 +1412,10 @@ class VirtualFileSystem {
     if (!this.loaded)
       return;
     if (!path) {
-      this.currentPath = ["home", "guest"];
+      this.currentPath = [
+        "home",
+        "guest"
+      ];
       return;
     }
     const target = this.resolvePath(path);
@@ -928,7 +1427,9 @@ class VirtualFileSystem {
       print(`cd: ${path}: Not a directory`, "error");
       return;
     }
-    let p = path.startsWith("/") ? [] : [...this.currentPath];
+    const p = path.startsWith("/") ? [] : [
+      ...this.currentPath
+    ];
     const parts = path.split("/").filter(Boolean);
     for (const part of parts) {
       if (part === ".")
@@ -986,7 +1487,7 @@ var fileSystem = new VirtualFileSystem;
 // src/commands/developer.ts
 function cmdXp(arg) {
   const num = +arg;
-  if (isNaN(num))
+  if (Number.isNaN(num))
     return;
   if (num > 1e4) {
     print("You can't gain that much XP at once!", "error");
@@ -1108,7 +1609,11 @@ function cat(code) {
 
 // src/complete.ts
 function handleAutoComplete(cmd, split) {
-  if (["ls", "cd", "cat"].includes(cmd)) {
+  if ([
+    "ls",
+    "cd",
+    "cat"
+  ].includes(cmd)) {
     const files = fileSystem.getFilesAndDirs(fileSystem.getCWD());
     const matchingFiles = files.filter((file) => file.startsWith(split[1]));
     if (matchingFiles.length === 1) {
@@ -1231,7 +1736,7 @@ function cmdCd(arg) {
     unlockAchievement("navigator");
 }
 function cmdCat(arg) {
-  if (!arg || !isNaN(+arg)) {
+  if (!arg || !Number.isNaN(+arg)) {
     cat(+arg);
     return;
   }
@@ -1251,7 +1756,10 @@ function cmdSudo(args, fullArgs) {
     unlockAchievement("curious");
     return;
   }
-  if (firstArg === "rm" && ["-rf", "-fr"].includes(args[1]) && args[2] === "/") {
+  if (firstArg === "rm" && [
+    "-rf",
+    "-fr"
+  ].includes(args[1]) && args[2] === "/") {
     systemDestroy();
     return;
   }
@@ -1544,11 +2052,14 @@ function startPong() {
   function drawTrajectory() {
     ctx.strokeStyle = "rgba(195, 0, 255, 0.4)";
     ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.setLineDash([
+      5,
+      5
+    ]);
     ctx.beginPath();
     let simX = ballX + BALL_SIZE / 2;
     let simY = ballY + BALL_SIZE / 2;
-    let simVX = ballSpeedX;
+    const simVX = ballSpeedX;
     let simVY = ballSpeedY;
     ctx.moveTo(simX, simY);
     for (let i = 0;i < 20; i++) {
@@ -1593,7 +2104,10 @@ function startPong() {
       drawTrajectory();
     }
     ctx.strokeStyle = "#444";
-    ctx.setLineDash([10, 15]);
+    ctx.setLineDash([
+      10,
+      15
+    ]);
     ctx.beginPath();
     ctx.moveTo(canvas.width / 2, 0);
     ctx.lineTo(canvas.width / 2, canvas.height);
@@ -1668,15 +2182,26 @@ function startSnake() {
   const FONT_SIZE = 16;
   ctx.font = `${FONT_SIZE}px 'Courier New', monospace`;
   ctx.textBaseline = "top";
-  let snake = [{
-    x: Math.floor(canvas.width / 2 / CELL_SIZE) * CELL_SIZE,
-    y: Math.floor(canvas.height / 2 / CELL_SIZE) * CELL_SIZE
-  }];
-  let direction = { x: CELL_SIZE, y: 0 };
-  let nextDirection = { x: CELL_SIZE, y: 0 };
+  const snake = [
+    {
+      x: Math.floor(canvas.width / 2 / CELL_SIZE) * CELL_SIZE,
+      y: Math.floor(canvas.height / 2 / CELL_SIZE) * CELL_SIZE
+    }
+  ];
+  let direction = {
+    x: CELL_SIZE,
+    y: 0
+  };
+  let nextDirection = {
+    x: CELL_SIZE,
+    y: 0
+  };
   let score = 0;
   let gameLoopId;
-  let apple = { x: 0, y: 0 };
+  const apple = {
+    x: 0,
+    y: 0
+  };
   const walls = [];
   const terminalText = output.innerText || "VOID ERROR NULL SYSTEM FAILURE";
   const words = terminalText.split(" ").filter((w) => w.length > 3 && w.length < 20).sort(() => Math.random() - 0.5).slice(0, 150);
@@ -1708,19 +2233,31 @@ function startSnake() {
     switch (e.key) {
       case "ArrowUp":
         if (direction.y === 0)
-          nextDirection = { x: 0, y: -CELL_SIZE };
+          nextDirection = {
+            x: 0,
+            y: -CELL_SIZE
+          };
         break;
       case "ArrowDown":
         if (direction.y === 0)
-          nextDirection = { x: 0, y: CELL_SIZE };
+          nextDirection = {
+            x: 0,
+            y: CELL_SIZE
+          };
         break;
       case "ArrowLeft":
         if (direction.x === 0)
-          nextDirection = { x: -CELL_SIZE, y: 0 };
+          nextDirection = {
+            x: -CELL_SIZE,
+            y: 0
+          };
         break;
       case "ArrowRight":
         if (direction.x === 0)
-          nextDirection = { x: CELL_SIZE, y: 0 };
+          nextDirection = {
+            x: CELL_SIZE,
+            y: 0
+          };
         break;
       case "Escape":
         cleanup();
@@ -1732,7 +2269,10 @@ function startSnake() {
   function update() {
     direction = nextDirection;
     const head = snake[0];
-    const newHead = { x: head.x + direction.x, y: head.y + direction.y };
+    const newHead = {
+      x: head.x + direction.x,
+      y: head.y + direction.y
+    };
     if (newHead.x < 0 || newHead.x >= canvas.width || newHead.y < 0 || newHead.y >= canvas.height) {
       gameOver();
       return;
@@ -1874,7 +2414,7 @@ function printAvailable(name, description) {
   print(`  <span class="success">${name}</span> - ${description}`);
 }
 function cmdHelp() {
-  let userLevel = $store.level.get();
+  const userLevel = $store.level.get();
   print("Available commands:");
   printAvailable("help", "Show this help message");
   printAvailable("status", "Show your current level and XP");
@@ -1979,7 +2519,20 @@ function cmdMail(args, fullArgs) {
       return;
     }
     const message = args.slice(1).join(" ");
-    const mailCodes = [109, "a", 105, 108, "t", 111, 58, "r", 7 * 8 + 5 * 11, 111, 116, Math.pow(2, 6)];
+    const mailCodes = [
+      109,
+      "a",
+      105,
+      108,
+      "t",
+      111,
+      58,
+      "r",
+      7 * 8 + 5 * 11,
+      111,
+      116,
+      Math.pow(2, 6)
+    ];
     const mailURL = mailCodes.map((code) => typeof code === "string" ? code : String.fromCharCode(code)).join("");
     location.href = `${mailURL}wxn0.xyz?subject=Mail from game&body=${encodeURIComponent(message)}`;
     return;
@@ -1991,7 +2544,7 @@ function cmdMail(args, fullArgs) {
     return;
   }
   const index = parseInt(args[0]) - 1;
-  if (isNaN(index) || index < 0 || index >= mails.length) {
+  if (Number.isNaN(index) || index < 0 || index >= mails.length) {
     print("Invalid message number.", "error");
     return;
   }
@@ -2004,8 +2557,13 @@ function cmdMail(args, fullArgs) {
   print(mail.body.replace(/\n/g, "<br>"));
   print("----------------------------------------", "dim");
   if (!mail.read) {
-    const newMails = [...mails];
-    newMails[index] = { ...mail, read: true };
+    const newMails = [
+      ...mails
+    ];
+    newMails[index] = {
+      ...mail,
+      read: true
+    };
     $store.mails.set(newMails);
     saveGame();
   }
@@ -2107,10 +2665,21 @@ async function cmdXkcd(arg) {
 
 // src/commands/index.ts
 var registry = {
-  help: { fn: () => cmdHelp() },
-  status: { fn: () => cmdStatus() },
-  stats: { fn: () => cmdStats() },
-  achievements: { aliases: ["a"], fn: () => cmdAchievements() },
+  help: {
+    fn: () => cmdHelp()
+  },
+  status: {
+    fn: () => cmdStatus()
+  },
+  stats: {
+    fn: () => cmdStats()
+  },
+  achievements: {
+    aliases: [
+      "a"
+    ],
+    fn: () => cmdAchievements()
+  },
   links: {
     fn: () => {
       showLinks();
@@ -2130,61 +2699,171 @@ var registry = {
     }
   },
   github: {
-    aliases: ["git", "source"],
+    aliases: [
+      "git",
+      "source"
+    ],
     fn: () => {
       window.open("https://github.com/wxn0brP/wxn0.xyz", "_blank");
       unlockAchievement("developer");
     }
   },
-  news: { aliases: ["changelog", "updates"], fn: () => cmdNews() },
-  hello: { aliases: ["hi"], fn: () => cmdHello() },
-  ls: { aliases: ["ll"], fn: ({ args }) => cmdLs(args[0]) },
-  dir: { fn: () => print("Windows sucks.", "error") },
-  cd: { fn: ({ args }) => cmdCd(args[0]) },
-  pwd: { fn: () => print(fileSystem.getCWD()) },
-  cat: { fn: ({ args }) => cmdCat(args[0]) },
+  news: {
+    aliases: [
+      "changelog",
+      "updates"
+    ],
+    fn: () => cmdNews()
+  },
+  hello: {
+    aliases: [
+      "hi"
+    ],
+    fn: () => cmdHello()
+  },
+  ls: {
+    aliases: [
+      "ll"
+    ],
+    fn: ({ args }) => cmdLs(args[0])
+  },
+  dir: {
+    fn: () => print("Windows sucks.", "error")
+  },
+  cd: {
+    fn: ({ args }) => cmdCd(args[0])
+  },
+  pwd: {
+    fn: () => print(fileSystem.getCWD())
+  },
+  cat: {
+    fn: ({ args }) => cmdCat(args[0])
+  },
   rm: {
     fn: () => {
       print("Permission denied.", "error");
       unlockAchievement("destructor");
     }
   },
-  hack: { fn: () => startHack() },
-  mine: { fn: () => startMining() },
-  shop: { aliases: ["store"], fn: ({ fullArgs }) => startShop(fullArgs) },
-  vim: { aliases: ["vi"], fn: () => openVim() },
-  snake: { fn: () => cmdSnake() },
-  pong: { aliases: ["ping"], fn: () => cmdPong() },
-  zhiva: { fn: ({ args }) => cmdZhiva(...args) },
-  clear: { fn: () => cmdClear() },
-  reset: { fn: () => cmdReset() },
-  welcome: { fn: () => cmdWelcome() },
-  exit: { fn: () => cmdExit() },
-  return: { fn: () => cmdReturn() },
-  run: { fn: () => cmdRun() },
-  suglite: { fn: () => cmdSuglite() },
-  mail: { aliases: ["inbox", "email"], fn: ({ args, fullArgs }) => cmdMail(args, fullArgs) },
-  sudo: { fn: ({ args, fullArgs }) => cmdSudo(args, fullArgs) },
-  echo: { fn: ({ fullArgs }) => cmdEcho(fullArgs) },
-  make: { fn: ({ args }) => cmdMake(args) },
-  matrix: { fn: () => cmdMatrix() },
-  coinflip: { fn: () => cmdCoinflip() },
-  42: { fn: () => cmd42() },
-  konami: { fn: () => cmdKonami() },
-  apt: { fn: ({ args }) => cmdApt(args) },
-  cowsay: { fn: ({ fullArgs }) => cmdCowSay(fullArgs) },
-  fortune: { fn: () => cmdFortune() },
-  arch: { fn: () => cmdArch() },
-  sl: { fn: () => cmdSl() },
-  pacman: { fn: ({ args }) => cmdPacman(args) },
-  nyan: { aliases: ["nyan-cat"], fn: () => cmdNyanCat() },
-  xkcd: { fn: ({ args }) => cmdXkcd(args[0]) },
-  "add-xp": { fn: ({ args }) => cmdXp(args[0]) },
-  "set-achievement": { fn: ({ args }) => cmdSetAchievement(args[0]) }
+  hack: {
+    fn: () => startHack()
+  },
+  mine: {
+    fn: () => startMining()
+  },
+  shop: {
+    aliases: [
+      "store"
+    ],
+    fn: ({ fullArgs }) => startShop(fullArgs)
+  },
+  vim: {
+    aliases: [
+      "vi"
+    ],
+    fn: () => openVim()
+  },
+  snake: {
+    fn: () => cmdSnake()
+  },
+  pong: {
+    aliases: [
+      "ping"
+    ],
+    fn: () => cmdPong()
+  },
+  zhiva: {
+    fn: ({ args }) => cmdZhiva(...args)
+  },
+  clear: {
+    fn: () => cmdClear()
+  },
+  reset: {
+    fn: () => cmdReset()
+  },
+  welcome: {
+    fn: () => cmdWelcome()
+  },
+  exit: {
+    fn: () => cmdExit()
+  },
+  return: {
+    fn: () => cmdReturn()
+  },
+  run: {
+    fn: () => cmdRun()
+  },
+  suglite: {
+    fn: () => cmdSuglite()
+  },
+  mail: {
+    aliases: [
+      "inbox",
+      "email"
+    ],
+    fn: ({ args, fullArgs }) => cmdMail(args, fullArgs)
+  },
+  sudo: {
+    fn: ({ args, fullArgs }) => cmdSudo(args, fullArgs)
+  },
+  echo: {
+    fn: ({ fullArgs }) => cmdEcho(fullArgs)
+  },
+  make: {
+    fn: ({ args }) => cmdMake(args)
+  },
+  matrix: {
+    fn: () => cmdMatrix()
+  },
+  coinflip: {
+    fn: () => cmdCoinflip()
+  },
+  42: {
+    fn: () => cmd42()
+  },
+  konami: {
+    fn: () => cmdKonami()
+  },
+  apt: {
+    fn: ({ args }) => cmdApt(args)
+  },
+  cowsay: {
+    fn: ({ fullArgs }) => cmdCowSay(fullArgs)
+  },
+  fortune: {
+    fn: () => cmdFortune()
+  },
+  arch: {
+    fn: () => cmdArch()
+  },
+  sl: {
+    fn: () => cmdSl()
+  },
+  pacman: {
+    fn: ({ args }) => cmdPacman(args)
+  },
+  nyan: {
+    aliases: [
+      "nyan-cat"
+    ],
+    fn: () => cmdNyanCat()
+  },
+  xkcd: {
+    fn: ({ args }) => cmdXkcd(args[0])
+  },
+  "add-xp": {
+    fn: ({ args }) => cmdXp(args[0])
+  },
+  "set-achievement": {
+    fn: ({ args }) => cmdSetAchievement(args[0])
+  }
 };
 var commandsList = Object.keys(registry).flatMap((key) => {
   const aliases = registry[key].aliases || [];
-  return [key, ...aliases];
+  return [
+    key,
+    ...aliases
+  ];
 });
 function handleCommand(command) {
   if (!command.trim()) {
@@ -2213,7 +2892,11 @@ function handleCommand(command) {
     }
   }
   if (commandDef) {
-    commandDef.fn({ args, fullArgs, command });
+    commandDef.fn({
+      args,
+      fullArgs,
+      command
+    });
     incrementStats(lowerCmd);
   } else {
     if (achievementCounters.lastFailedCommand === command) {
@@ -2262,7 +2945,14 @@ async function systemDestroy() {
   await delay(2000);
   print("Initiating deletion sequence...", "system");
   await delay(1000);
-  const dirs = ["/home/guest", "/var/log", "/usr/bin", "/etc", "/tmp", "/usr/share/locale/fr"];
+  const dirs = [
+    "/home/guest",
+    "/var/log",
+    "/usr/bin",
+    "/etc",
+    "/tmp",
+    "/usr/share/locale/fr"
+  ];
   for (const dir of dirs) {
     print(`Deleting ${dir}... [OK]`, "dim");
     await delay(300);
@@ -2585,7 +3275,13 @@ document.addEventListener("visibilitychange", () => {
     resetIdleTimer();
   }
 });
-["mousemove", "keydown", "click", "scroll", "touchstart"].forEach((event) => {
+[
+  "mousemove",
+  "keydown",
+  "click",
+  "scroll",
+  "touchstart"
+].forEach((event) => {
   window.addEventListener(event, resetIdleTimer);
 });
 window.addEventListener("mousemove", () => {
