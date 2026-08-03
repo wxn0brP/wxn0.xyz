@@ -367,10 +367,11 @@ export function unlockAchievement(id: string) {
 	addXp(achievement.xp);
 
 	print(
-		`<br>🏆 <span class="success">Achievement Unlocked: ${achievement.name}</span>`,
+		`<br>---<br>🏆 <span class="success">Achievement Unlocked: ${achievement.name}</span>`,
 		"system",
 	);
 	print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
+	print("---<br>", "system");
 
 	checkCompletionist();
 }

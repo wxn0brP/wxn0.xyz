@@ -99,7 +99,7 @@ export async function sendMail(mailDef: any) {
 	]);
 
 	print(
-		"<br>📨 <span class='success'>You have a new message!</span> Type 'mail' to read.<br>",
+		"<br>---<br>📨 <span class='success'>You have a new message!</span> Type 'mail' to read.<br>---<br>",
 		"system",
 	);
 	saveGame();
