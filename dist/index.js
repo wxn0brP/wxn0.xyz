@@ -674,7 +674,7 @@ async function sendMail(mailDef) {
     newMail,
     ...mails
   ]);
-  print("<br>\uD83D\uDCE8 <span class='success'>You have a new message!</span> Type 'mail' to read.<br>", "system");
+  print("<br>---<br>\uD83D\uDCE8 <span class='success'>You have a new message!</span> Type 'mail' to read.<br>---<br>", "system");
   saveGame();
 }
 var storySteps = [
@@ -1075,8 +1075,9 @@ function unlockAchievement(id) {
     id
   ]);
   addXp(achievement.xp);
-  print(`<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
+  print(`<br>---<br>\uD83C\uDFC6 <span class="success">Achievement Unlocked: ${achievement.name}</span>`, "system");
   print(`   ${achievement.description} (+${achievement.xp} XP)<br>`, "dim");
+  print("---<br>", "system");
   checkCompletionist();
 }
 function checkCompletionist() {
