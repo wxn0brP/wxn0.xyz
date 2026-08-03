@@ -3,24 +3,23 @@ export const output = document.getElementById("output") as HTMLDivElement;
 export const input = document.getElementById("input") as HTMLInputElement;
 
 export function print(message: string, className?: string) {
-    const p = document.createElement("p");
-    p.innerHTML = message;
-    if (className) {
-        p.className = className;
-    }
-    output.appendChild(p);
-    terminal.scrollTop = terminal.scrollHeight;
-    return p;
+	const p = document.createElement("p");
+	p.innerHTML = message;
+	if (className) {
+		p.className = className;
+	}
+	output.appendChild(p);
+	terminal.scrollTop = terminal.scrollHeight;
+	return p;
 }
 
 export function printCommand(command: string) {
-    if (!command.trim())
-        return;
-    const p = document.createElement("p");
-    p.innerHTML = `<span class="prompt'>></span> ${command}`;
-    output.appendChild(p);
+	if (!command.trim()) return;
+	const p = document.createElement("p");
+	p.innerHTML = `<span class="prompt'>></span> ${command}`;
+	output.appendChild(p);
 }
 
 export function clear() {
-    output.innerHTML = "";
+	output.innerHTML = "";
 }

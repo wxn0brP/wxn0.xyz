@@ -7,29 +7,32 @@ import { checkLevelAchievements } from "./achievements";
 import { checkStoryProgress } from "./game/story";
 
 export function addXp(xp: number) {
-    const multiplier = $store.xpMultiplier.get();
-    const totalXp = Math.floor(xp * multiplier);
+	const multiplier = $store.xpMultiplier.get();
+	const totalXp = Math.floor(xp * multiplier);
 
-    incrementCell($store.xp, totalXp);
+	incrementCell($store.xp, totalXp);
 
-    while (true) {
-        const currentLevel = $store.level.get();
-        const required = getXpToNextLevel(currentLevel);
+	while (true) {
+		const currentLevel = $store.level.get();
+		const required = getXpToNextLevel(currentLevel);
 
-        if ($store.xp.get() >= required) {
-            decrementCell($store.xp, required);
-            incrementCell($store.level, 1);
+		if ($store.xp.get() >= required) {
+			decrementCell($store.xp, required);
+			incrementCell($store.level, 1);
 
-            const newLevel = $store.level.get();
-            print(`⬆️ Level up! You are now level <span class="success">${newLevel}</span>.`, "system");
-            print(`Check 'help' for new commands!`, "system");
-            checkUnlocks();
-            checkLevelAchievements(newLevel);
-            checkStoryProgress();
-        } else {
-            break;
-        }
-    }
-    checkStoryProgress();
-    saveGame();
+			const newLevel = $store.level.get();
+			print(
+				`⬆️ Level up! You are now level <span class="success">${newLevel}</span>.`,
+				"system",
+			);
+			print(`Check 'help' for new commands!`, "system");
+			checkUnlocks();
+			checkLevelAchievements(newLevel);
+			checkStoryProgress();
+		} else {
+			break;
+		}
+	}
+	checkStoryProgress();
+	saveGame();
 }

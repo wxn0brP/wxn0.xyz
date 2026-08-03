@@ -4,35 +4,35 @@ import { resetGame } from "../save";
 import { welcome as gameWelcome } from "../game";
 
 export function cmdClear() {
-    uiClear();
-    achievementCounters.clearCount++;
-    if (achievementCounters.clearCount >= 10) unlockAchievement("clean_freak");
+	uiClear();
+	achievementCounters.clearCount++;
+	if (achievementCounters.clearCount >= 10) unlockAchievement("clean_freak");
 }
 
 export function cmdReset() {
-    resetGame();
+	resetGame();
 }
 
 export function cmdWelcome() {
-    gameWelcome();
+	gameWelcome();
 }
 
 export function cmdExit() {
-    print("There is no escape.", "error");
-    achievementCounters.exitCount++;
-    if (achievementCounters.exitCount >= 5) unlockAchievement("escape_artist");
+	print("There is no escape.", "error");
+	achievementCounters.exitCount++;
+	if (achievementCounters.exitCount >= 5) unlockAchievement("escape_artist");
 }
 
 export function cmdSuglite() {
-    print("Suglite is watching...", "system");
+	print("Suglite is watching...", "system");
 }
 
 export function cmdReturn() {
-    localStorage.setItem("notHappened", "true");
-    location.reload();
+	localStorage.setItem("notHappened", "true");
+	location.reload();
 }
 
 export function cmdRun() {
-    localStorage.removeItem("run");
-    location.reload();
+	localStorage.removeItem("run");
+	location.reload();
 }

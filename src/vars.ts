@@ -1,32 +1,52 @@
 import { createStore } from "@wxn0brp/flanker-ui";
 
 export const links = [
-    { level: 1, name: "Homepage/Developer Website", url: "https://wxn0brp.github.io", displayed: false },
-    { level: 2, name: "GitHub Profile", url: "https://github.com/wxn0brP", displayed: false },
-    { level: 3, name: "ValtheraDB", url: "https://github.com/wxn0brP/ValtheraDB", displayed: false },
-    { level: 4, name: "VQL", url: "https://github.com/wxn0brP/VQL", displayed: false },
+	{
+		level: 1,
+		name: "Homepage/Developer Website",
+		url: "https://wxn0brp.github.io",
+		displayed: false,
+	},
+	{
+		level: 2,
+		name: "GitHub Profile",
+		url: "https://github.com/wxn0brP",
+		displayed: false,
+	},
+	{
+		level: 3,
+		name: "ValtheraDB",
+		url: "https://github.com/wxn0brP/ValtheraDB",
+		displayed: false,
+	},
+	{
+		level: 4,
+		name: "VQL",
+		url: "https://github.com/wxn0brP/VQL",
+		displayed: false,
+	},
 ];
 
 export const $store = createStore({
-    xp: 0,
-    level: 0,
-    achievements: [] as string[],
-    credits: 0,
-    xpMultiplier: 1,
-    mails: [] as Mail[],
-    storyProgress: 0,
-    busy: false,
+	xp: 0,
+	level: 0,
+	achievements: [] as string[],
+	credits: 0,
+	xpMultiplier: 1,
+	mails: [] as Mail[],
+	storyProgress: 0,
+	busy: false,
 });
 
 export interface Mail {
-    id: string;
-    from: string;
-    subject: string;
-    body: string;
-    read: boolean;
-    timestamp: number;
+	id: string;
+	from: string;
+	subject: string;
+	body: string;
+	read: boolean;
+	timestamp: number;
 }
 
 export function getXpToNextLevel(level: number): number {
-    return Math.floor(90 + 15 * Math.pow(level, 1.3));
+	return Math.floor(90 + 15 * Math.pow(level, 1.3));
 }

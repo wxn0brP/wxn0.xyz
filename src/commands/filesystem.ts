@@ -1,26 +1,25 @@
-import { input, print } from "../ui";
-import { unlockAchievement, achievementCounters } from "../achievements";
+import { achievementCounters, unlockAchievement } from "../achievements";
 import { fileSystem } from "../filesystem";
 import { cat as catGame } from "../game/cat";
 import { resetDash } from "../input";
 
 export function cmdLs(arg: string) {
-    fileSystem.ls(arg);
-    unlockAchievement("explorer");
+	fileSystem.ls(arg);
+	unlockAchievement("explorer");
 }
 
 export function cmdCd(arg: string) {
-    fileSystem.cd(arg);
-    resetDash();
-    achievementCounters.cdCount++;
-    if (achievementCounters.cdCount >= 5) unlockAchievement("navigator");
+	fileSystem.cd(arg);
+	resetDash();
+	achievementCounters.cdCount++;
+	if (achievementCounters.cdCount >= 5) unlockAchievement("navigator");
 }
 
 export function cmdCat(arg: string) {
-    if (!arg || !isNaN(+arg)) {
-        catGame(+arg);
-        return;
-    }
-    fileSystem.cat(arg);
-    unlockAchievement("reader");
+	if (!arg || !Number.isNaN(+arg)) {
+		catGame(+arg);
+		return;
+	}
+	fileSystem.cat(arg);
+	unlockAchievement("reader");
 }

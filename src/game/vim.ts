@@ -4,21 +4,21 @@ import { unlockAchievement } from "../achievements";
 let vimActive = false;
 
 export function openVim() {
-    if (vimActive) return;
-    vimActive = true;
-    input.blur();
+	if (vimActive) return;
+	vimActive = true;
+	input.blur();
 
-    const originalDisplay = output.style.display;
-    const inputLine = document.getElementById("input-line")!;
-    const originalInputDisplay = inputLine.style.display;
+	const originalDisplay = output.style.display;
+	const inputLine = document.getElementById("input-line")!;
+	const originalInputDisplay = inputLine.style.display;
 
-    output.style.display = "none";
-    inputLine.style.display = "none";
+	output.style.display = "none";
+	inputLine.style.display = "none";
 
-    const vim = document.createElement("div");
-    vim.classList.add("vim");
+	const vim = document.createElement("div");
+	vim.classList.add("vim");
 
-    vim.innerHTML = `
+	vim.innerHTML = `
         <div style="flex: 1; white-space: pre-wrap; color: #4488ff;">~
 ~
 ~
@@ -44,42 +44,42 @@ export function openVim() {
         <div id="vim-cmd" style="height: 20px;"></div>
     `;
 
-    document.body.appendChild(vim);
+	document.body.appendChild(vim);
 
-    let keyPresses = 0;
-    let firstKeyPressTime = 0;
+	let keyPresses = 0;
+	let firstKeyPressTime = 0;
 
-    const closeVim = () => {
-        vim.remove();
-        output.style.display = originalDisplay;
-        inputLine.style.display = originalInputDisplay;
-        window.removeEventListener("keydown", handleKey);
-        vimActive = false;
-        input.focus();
-        unlockAchievement("vim_survivor");
-    };
+	const closeVim = () => {
+		vim.remove();
+		output.style.display = originalDisplay;
+		inputLine.style.display = originalInputDisplay;
+		window.removeEventListener("keydown", handleKey);
+		vimActive = false;
+		input.focus();
+		unlockAchievement("vim_survivor");
+	};
 
-    const handleKey = (e: KeyboardEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+	const handleKey = (e: KeyboardEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
 
-        if (firstKeyPressTime === 0) {
-            firstKeyPressTime = Date.now();
-        }
+		if (firstKeyPressTime === 0) {
+			firstKeyPressTime = Date.now();
+		}
 
-        keyPresses++;
-        const timeDiff = Date.now() - firstKeyPressTime;
+		keyPresses++;
+		const timeDiff = Date.now() - firstKeyPressTime;
 
-        if (timeDiff > 1000) {
-            keyPresses = 0;
-            firstKeyPressTime = 0;
-        }
+		if (timeDiff > 1000) {
+			keyPresses = 0;
+			firstKeyPressTime = 0;
+		}
 
-        if (keyPresses > 10 && timeDiff < 1000) {
-            closeVim();
-        }
-    };
+		if (keyPresses > 10 && timeDiff < 1000) {
+			closeVim();
+		}
+	};
 
-    window.addEventListener("keydown", handleKey);
-    unlockAchievement("vim_brave");
+	window.addEventListener("keydown", handleKey);
+	unlockAchievement("vim_brave");
 }

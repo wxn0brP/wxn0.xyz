@@ -15,6 +15,7 @@
         "build": "bun build src/index.ts src/shake.ts --outdir dist"
     },
     "devDependencies": {
+        "@wxn0brp/biome": "*",
         "typescript": "^6"
     },
     "dependencies": {
