@@ -57,6 +57,9 @@ function loadAnimation() {
       el.classList.remove("glitch-color");
       el.style.color = "";
     });
+    setTimeout(() => {
+      document.querySelector("#small-paper-button").style.display = "";
+    }, 4000);
   }, GLITCH_TIME);
 }
 function addRandomText(i) {
@@ -90,7 +93,7 @@ container.addEventListener("click", () => {
     container.appendChild(p);
   }
   clicked++;
-  if (clicked === 2) {
+  if (clicked === 5) {
     if (document.fullscreenElement)
       return;
     const e = document.documentElement;
@@ -100,5 +103,8 @@ container.addEventListener("click", () => {
       e.webkitRequestFullscreen();
     else if (e.msRequestFullscreen)
       e.msRequestFullscreen();
+  }
+  if (clicked === 2) {
+    document.querySelector("#small-paper-button").style.display = "none";
   }
 });
