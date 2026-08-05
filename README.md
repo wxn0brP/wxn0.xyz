@@ -23,6 +23,7 @@ This is a TypeScript project built with [Bun](https://bun.sh/).
 ### Setup
 
 Install dependencies:
+
 ```bash
 bun install
 ```
@@ -30,10 +31,10 @@ bun install
 ### Build
 
 To build the project, run:
+
 ```bash
-bun build
+bun run build
 ```
-This will compile the TypeScript files from `src/` into JavaScript in the `dist/` directory.
 
 ## License
 
