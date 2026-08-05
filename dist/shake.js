@@ -108,3 +108,9 @@ container.addEventListener("click", () => {
     document.querySelector("#small-paper-button").style.display = "none";
   }
 });
+if (localStorage.getItem("run")) {
+  const run = Number(localStorage.getItem("run"));
+  const day = 1000 * 60 * 60 * 24;
+  if (Date.now() - run < day)
+    loadTerminal();
+}
