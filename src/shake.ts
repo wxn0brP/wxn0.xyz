@@ -130,4 +130,19 @@ if (localStorage.getItem("run")) {
 	if (Date.now() - run < day) loadTerminal();
 }
 
+const isMobile =
+	/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+		navigator.userAgent,
+	) || window.innerWidth < 768;
+
+if (isMobile) {
+	document.body.innerHTML = `
+		<div id="mobile-page">
+			<h1>wxn0.xyz</h1>
+			<p>Don't look at me.</p>
+			<a href="https://github.com/wxn0brP">GitHub</a>
+		</div>
+	`;
+}
+
 export {};
